@@ -1,94 +1,163 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { Wallet, FolderOpen, Landmark, ShieldCheck } from "lucide-react";
-import { useSession } from "@/providers/session-provider";
-import { useProjects } from "@/features/projects/hooks/use-projects";
-import { useUsers } from "@/features/admin/hooks/use-users";
-import { Card } from "@/shared/ui/card";
-import { PageHeader } from "@/shared/ui/page-header";
-import { StatPanel } from "@/shared/ui/stat-panel";
+import Link from "next/link"
+import {
+  TrendingUp,
+  Wallet,
+  Leaf,
+  Zap,
+  ArrowUpRight,
+  Sun,
+  Wind,
+  Droplets,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useSession } from "@/providers/session-provider"
+import { useProjects } from "@/features/projects/hooks/use-projects"
+import type { EnergyType } from "@/features/projects/types/projects"
 
-export default function DashboardHomePage() {
-  const { user, permissions } = useSession();
-  const projectsQuery = useProjects();
-  const usersQuery = useUsers(permissions.canReadUsers);
-
-  const projectsCount = projectsQuery.data?.content.length ?? 0;
-  const usersCount = permissions.canReadUsers ? usersQuery.data?.content.length ?? 0 : null;
-
-  return (
-    <>
-      <PageHeader
-        eyebrow="Mi dashboard"
-        title={`Hola, ${user?.email ?? "usuario"}`}
-        description="Desde aqui puedes seguir tu cuenta, entrar a proyectos, revisar tu wallet y moverte segun el rol que tengas dentro de LIKEN."
-      />
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatPanel label="Rol actual" value={user?.role ?? "USER"} hint="La navegacion cambia segun permisos y perfil operativo." />
-        <StatPanel label="Proyectos visibles" value={String(projectsCount)} hint="Catalogo actual de oportunidades disponibles." />
-        <StatPanel
-          label="Usuarios"
-          value={usersCount === null ? "Privado" : String(usersCount)}
-          hint={usersCount === null ? "Solo visible para perfiles con permisos de lectura." : "Conteo actual de cuentas disponibles en el panel."}
-        />
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
-        <Card title="Resumen personal" description="Primer corte orientado al inversor dentro de la plataforma.">
-          <div className="grid gap-3 md:grid-cols-2">
-            <QuickTile icon={<Landmark className="h-4 w-4" />} label="Capital invertido" value="0 USD" helper="Se activara cuando el modulo de inversiones cierre su integracion." />
-            <QuickTile icon={<Wallet className="h-4 w-4" />} label="Saldo disponible" value="0 USD" helper="Espacio preparado para wallet y pasarela de pagos." />
-            <QuickTile icon={<FolderOpen className="h-4 w-4" />} label="Participaciones" value="0 activas" helper="Tus tokens e inversiones apareceran aqui." />
-            <QuickTile icon={<ShieldCheck className="h-4 w-4" />} label="Estado de cuenta" value="Lista" helper="Tu acceso y permisos ya estan funcionando contra el backend." />
-          </div>
-        </Card>
-
-        <Card title="Accesos rapidos" description="Atajos utiles para tu recorrido inicial.">
-          <div className="grid gap-3 text-sm">
-            <QuickLink href="/dashboard/projects" title="Ir a proyectos" description="Explora oportunidades y crea una si tu rol lo permite." />
-            <QuickLink href="/dashboard/investments" title="Ver inversiones" description="Seguimiento de cartera, dividendos y rendimiento." />
-            <QuickLink href="/dashboard/wallet" title="Abrir wallet" description="Saldo, tokens LIKEN y conexion blockchain." />
-            <QuickLink href="/dashboard/account" title="Gestionar cuenta" description="Perfil, datos personales y cierre de sesion." />
-          </div>
-        </Card>
-      </div>
-    </>
-  );
+const energyIcons: Record<EnergyType, React.ElementType> = {
+  SOLAR: Sun,
+  WIND: Wind,
+  HYDRO: Droplets,
+  BIOMASS: Leaf,
 }
 
-function QuickTile({
-  icon,
-  label,
-  value,
-  helper,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  helper: string;
-}) {
+const stateLabels: Record<string, { label: string; className: string }> = {
+  OPEN: { label: "Activo", className: "bg-green-500/10 text-green-500" },
+  PRE_OPEN: { label: "Próximamente", className: "bg-primary/10 text-primary" },
+  DRAFT: { label: "Borrador", className: "bg-muted text-muted-foreground" },
+  CLOSED: { label: "Cerrado", className: "bg-secondary text-secondary-foreground" },
+  CANCELLED: { label: "Cancelado", className: "bg-destructive/10 text-destructive" },
+}
+
+export default function DashboardPage() {
+  const { user } = useSession()
+  const projectsQuery = useProjects()
+  const projects = projectsQuery.data?.content ?? []
+  const displayName = user?.email?.split("@")[0] ?? "usuario"
+
+  const stats = [
+    { title: "Valor del Portafolio", value: "$0.00", change: "—", icon: Wallet },
+    { title: "Rendimiento Total", value: "$0.00", change: "—", icon: TrendingUp },
+    { title: "Tokens LKN", value: "0", change: "—", icon: Zap },
+    { title: "Proyectos disponibles", value: String(projects.length || "—"), change: "", icon: Leaf },
+  ]
+
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-4">
-      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-foreground-subtle)]">
-        <span className="text-[var(--color-accent)]">{icon}</span>
-        {label}
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="mt-1 text-muted-foreground">
+          Bienvenido de vuelta, {displayName}. Aquí está el resumen de tu portafolio.
+        </p>
       </div>
-      <div className="mt-3 text-lg font-semibold text-[var(--color-foreground)]">{value}</div>
-      <div className="mt-2 text-sm leading-6 text-[var(--color-foreground-muted)]">{helper}</div>
+
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <Card key={stat.title} className="bg-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                  <stat.icon className="h-6 w-6 text-primary" />
+                </div>
+                {stat.change && (
+                  <span className="flex items-center text-sm font-medium text-green-500">
+                    {stat.change}
+                    <ArrowUpRight className="ml-1 h-4 w-4" />
+                  </span>
+                )}
+              </div>
+              <div className="mt-4">
+                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-sm text-muted-foreground">{stat.title}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Proyectos recientes */}
+        <div className="lg:col-span-2">
+          <Card className="bg-card">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Proyectos disponibles</CardTitle>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/dashboard/projects">Ver todos</Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {projectsQuery.isLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-16 animate-pulse rounded-lg bg-secondary/50" />
+                  ))}
+                </div>
+              ) : projects.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No hay proyectos disponibles.</p>
+              ) : (
+                projects.slice(0, 4).map((project) => {
+                  const Icon = energyIcons[project.energyType] ?? Leaf
+                  const status = stateLabels[project.state] ?? stateLabels.DRAFT
+                  return (
+                    <div key={project.id} className="flex items-center gap-4 rounded-lg bg-secondary/50 p-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                        <Icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="truncate font-medium text-foreground">{project.name}</p>
+                          <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}>
+                            {status.label}
+                          </span>
+                        </div>
+                        <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
+                          <span>{project.country}</span>
+                          <span className="text-primary font-semibold">
+                            {parseFloat(project.expectedAnnualYield).toFixed(1)}% APY
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Acciones rápidas */}
+        <div>
+          <Card className="bg-card">
+            <CardHeader>
+              <CardTitle>Acciones Rápidas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[
+                { href: "/dashboard/projects", label: "Explorar Proyectos", icon: Leaf },
+                { href: "/dashboard/marketplace", label: "Ir al Marketplace", icon: TrendingUp },
+                { href: "/dashboard/wallet", label: "Depositar Fondos", icon: Wallet },
+                { href: "/dashboard/investments", label: "Ver Inversiones", icon: Zap },
+              ].map((action) => (
+                <Button
+                  key={action.href}
+                  variant="outline"
+                  className="w-full justify-start gap-3"
+                  asChild
+                >
+                  <Link href={action.href}>
+                    <action.icon className="h-4 w-4" />
+                    {action.label}
+                  </Link>
+                </Button>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
-  );
-}
-
-function QuickLink({ href, title, description }: { href: string; title: string; description: string }) {
-  return (
-    <Link
-      href={href}
-      className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-4 transition hover:border-[var(--color-accent)]"
-    >
-      <div className="font-semibold text-[var(--color-foreground)]">{title}</div>
-      <div className="mt-1 leading-6 text-[var(--color-foreground-muted)]">{description}</div>
-    </Link>
-  );
+  )
 }
