@@ -1,17 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, MoreHorizontal, UserCheck, UserX, ShieldCheck, Loader2 } from "lucide-react";
 import { useUsers } from "@/features/admin/hooks/use-users";
+import { useRoles } from "@/features/admin/hooks/use-roles";
+import { useActivateUser, useDeactivateUser, useChangeUserRole } from "@/features/admin/hooks/use-user-actions";
 import { Badge } from "@/shared/ui/badge";
 import { Card } from "@/shared/ui/card";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { Table } from "@/shared/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 function kycBadge(status: string | undefined) {
-  const s = status ?? "NONE";
+  const s = status ?? "NOT_STARTED";
   const map: Record<string, { tone: "success" | "warning" | "danger" | "neutral"; label: string }> = {
-    VERIFIED: { tone: "success", label: "Verificado" },
+    APPROVED: { tone: "success", label: "Verificado" },
     PENDING: { tone: "warning", label: "Pendiente" },
     REJECTED: { tone: "danger", label: "Rechazado" },
     NOT_STARTED: { tone: "neutral", label: "Sin iniciar" },
@@ -23,8 +36,14 @@ function kycBadge(status: string | undefined) {
 
 export function UsersTable() {
   const { data, isLoading, isError, error } = useUsers();
+  const rolesQuery = useRoles();
+  const activate = useActivateUser();
+  const deactivate = useDeactivateUser();
+  const changeRole = useChangeUserRole();
+
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [pendingUserId, setPendingUserId] = useState<number | null>(null);
 
   if (isLoading) {
     return <Card className="h-72 animate-pulse" />;
@@ -49,12 +68,35 @@ export function UsersTable() {
   }
 
   const roles = Array.from(new Set(data.content.map((u) => u.role?.name).filter(Boolean))) as string[];
+  const availableRoles = rolesQuery.data ?? [];
 
   const filtered = data.content.filter((u) => {
     const matchesSearch = search === "" || u.email.toLowerCase().includes(search.toLowerCase());
     const matchesRole = roleFilter === "" || u.role?.name === roleFilter;
     return matchesSearch && matchesRole;
   });
+
+  async function handleToggleActive(userId: number, isActive: boolean) {
+    setPendingUserId(userId);
+    try {
+      if (isActive) {
+        await deactivate.mutateAsync(userId);
+      } else {
+        await activate.mutateAsync(userId);
+      }
+    } finally {
+      setPendingUserId(null);
+    }
+  }
+
+  async function handleChangeRole(userId: number, roleId: number) {
+    setPendingUserId(userId);
+    try {
+      await changeRole.mutateAsync({ userId, roleId });
+    } finally {
+      setPendingUserId(null);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -117,7 +159,66 @@ export function UsersTable() {
             {
               key: "status",
               title: "Estado",
-              render: (user) => <Badge tone={user.active ? "success" : "danger"}>{user.active ? "Activo" : "Inactivo"}</Badge>,
+              render: (user) => (
+                <Badge tone={user.active ? "success" : "danger"}>
+                  {user.active ? "Activo" : "Inactivo"}
+                </Badge>
+              ),
+            },
+            {
+              key: "actions",
+              title: "",
+              render: (user) => {
+                const isPending = pendingUserId === user.id;
+                return (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" disabled={isPending} className="h-8 w-8">
+                        {isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <MoreHorizontal className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuItem
+                        onClick={() => handleToggleActive(user.id, user.active)}
+                        className={user.active ? "text-destructive focus:text-destructive" : "text-green-500 focus:text-green-500"}
+                      >
+                        {user.active ? (
+                          <><UserX className="mr-2 h-4 w-4" /> Desactivar</>
+                        ) : (
+                          <><UserCheck className="mr-2 h-4 w-4" /> Activar</>
+                        )}
+                      </DropdownMenuItem>
+
+                      {availableRoles.length > 0 && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>
+                              <ShieldCheck className="mr-2 h-4 w-4" />
+                              Cambiar rol
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent>
+                              {availableRoles.map((role) => (
+                                <DropdownMenuItem
+                                  key={role.id}
+                                  onClick={() => handleChangeRole(user.id, role.id)}
+                                  className={user.role?.name === role.name ? "font-semibold text-primary" : ""}
+                                >
+                                  {role.name}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              },
             },
           ]}
           data={filtered}
