@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { LoginForm } from "@/features/auth/components/login-form";
-import { Shield, TrendingUp, Leaf, Zap } from "lucide-react";
+import { CheckCircle, Zap } from "lucide-react";
+
+const benefits = [
+  "Accedé a proyectos de energía solar, eólica e hidroeléctrica",
+  "Seguí el rendimiento de tus inversiones en tiempo real",
+  "Operá con USDC y tokens LKN desde tu wallet",
+]
 
 export default function LoginPage() {
   return (
@@ -22,30 +28,21 @@ export default function LoginPage() {
 
         <div className="relative space-y-6">
           <h1 className="text-4xl font-bold tracking-tight text-foreground">
-            Invierte en el futuro de la{" "}
-            <span className="text-primary">Energía Limpia</span>
+            Tu portafolio{" "}
+            <span className="text-primary">te espera</span>
           </h1>
           <p className="text-lg text-muted-foreground">
-            Tokenizá tus inversiones en proyectos de energía renovable con la seguridad y transparencia de blockchain.
+            Iniciá sesión para ver tus inversiones, monitorear rendimientos y operar en el marketplace de energía renovable.
           </p>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-xl border border-border/50 bg-background/50 p-4 text-center">
-              <TrendingUp className="mx-auto mb-2 h-6 w-6 text-primary" />
-              <p className="text-lg font-bold text-foreground">12.5%</p>
-              <p className="text-xs text-muted-foreground">APY Promedio</p>
-            </div>
-            <div className="rounded-xl border border-border/50 bg-background/50 p-4 text-center">
-              <Shield className="mx-auto mb-2 h-6 w-6 text-primary" />
-              <p className="text-lg font-bold text-foreground">100%</p>
-              <p className="text-xs text-muted-foreground">Auditado</p>
-            </div>
-            <div className="rounded-xl border border-border/50 bg-background/50 p-4 text-center">
-              <Leaf className="mx-auto mb-2 h-6 w-6 text-primary" />
-              <p className="text-lg font-bold text-foreground">48</p>
-              <p className="text-xs text-muted-foreground">Proyectos</p>
-            </div>
-          </div>
+          <ul className="space-y-3">
+            {benefits.map((benefit) => (
+              <li key={benefit} className="flex items-start gap-3 text-sm text-muted-foreground">
+                <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                {benefit}
+              </li>
+            ))}
+          </ul>
         </div>
 
         <p className="relative text-sm text-muted-foreground">

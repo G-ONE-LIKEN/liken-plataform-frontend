@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import { apiClient } from "@/shared/lib/api-client";
 import { Button } from "@/shared/ui/button";
@@ -100,19 +101,26 @@ export function RegisterForm() {
         />
 
         {serverError && (
-          <div className="rounded-md bg-[rgba(214,69,93,0.12)] px-4 py-3 text-sm text-[var(--color-danger)]">
+          <div className="flex items-start gap-3 rounded-xl border border-[rgba(214,69,93,0.3)] bg-[rgba(214,69,93,0.08)] px-4 py-3 text-sm text-[var(--color-danger)]">
             {serverError}
           </div>
         )}
 
         {successMessage && (
-          <div className="rounded-md bg-[rgba(38,116,88,0.12)] px-4 py-3 text-sm text-[var(--color-success)]">
+          <div className="flex items-start gap-3 rounded-xl border border-[rgba(38,116,88,0.3)] bg-[rgba(38,116,88,0.08)] px-4 py-3 text-sm text-[var(--color-success)]">
             {successMessage}
           </div>
         )}
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Creando cuenta..." : "Registrarme"}
+          {isSubmitting ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Creando cuenta...
+            </span>
+          ) : (
+            "Registrarme"
+          )}
         </Button>
       </form>
 

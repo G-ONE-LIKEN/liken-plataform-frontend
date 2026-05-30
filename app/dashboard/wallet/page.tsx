@@ -1,6 +1,6 @@
 "use client"
 
-import { Wallet, ArrowUpRight, ArrowDownLeft, ExternalLink, Zap } from "lucide-react"
+import { Wallet, ArrowUpRight, ArrowDownLeft, ExternalLink, Zap, DollarSign, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -22,8 +22,8 @@ function ConfigRow({ label, value }: { label: string; value: string }) {
 }
 
 const balances = [
-  { token: "USDC", name: "USD Coin (Sepolia)", balance: "—", value: "—", icon: "💵" },
-  { token: "LKN", name: "LIKEN Token", balance: "0", value: "$0.00", icon: "⚡" },
+  { token: "USDC", name: "USD Coin (Sepolia)", balance: "—", value: "—", Icon: DollarSign },
+  { token: "LKN", name: "LIKEN Token", balance: "0", value: "$0.00", Icon: Zap },
 ]
 
 export default function WalletPage() {
@@ -104,17 +104,20 @@ export default function WalletPage() {
       </Web3Provider>
 
       {/* Entorno blockchain */}
-      <Card className="bg-card">
-        <CardHeader>
-          <CardTitle>Entorno Blockchain</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2">
-          <ConfigRow label="Chain ID" value={String(env.chainId)} />
-          <ConfigRow label="PaymentGateway" value={env.paymentGatewayAddress} />
-          <ConfigRow label="USDC" value={env.usdcAddress} />
-          <ConfigRow label="Onramp" value={env.onrampAddress} />
-        </CardContent>
-      </Card>
+      <details className="group">
+        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+          <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+          Configuración avanzada de red
+        </summary>
+        <Card className="mt-3 bg-card">
+          <CardContent className="grid gap-3 pt-6 sm:grid-cols-2">
+            <ConfigRow label="Chain ID" value={String(env.chainId)} />
+            <ConfigRow label="PaymentGateway" value={env.paymentGatewayAddress} />
+            <ConfigRow label="USDC" value={env.usdcAddress} />
+            <ConfigRow label="Onramp" value={env.onrampAddress} />
+          </CardContent>
+        </Card>
+      </details>
 
       {/* Balances & historial */}
       <Tabs defaultValue="balances" className="space-y-6">
@@ -133,7 +136,9 @@ export default function WalletPage() {
                 {balances.map((item) => (
                   <div key={item.token} className="flex items-center justify-between rounded-lg bg-secondary/50 p-4">
                     <div className="flex items-center gap-4">
-                      <span className="text-2xl">{item.icon}</span>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                        <item.Icon className="h-5 w-5 text-primary" />
+                      </div>
                       <div>
                         <p className="font-semibold text-foreground">{item.token}</p>
                         <p className="text-sm text-muted-foreground">{item.name}</p>

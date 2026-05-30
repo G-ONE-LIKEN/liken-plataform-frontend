@@ -3,28 +3,27 @@ import { Zap, Send, Globe, BookOpen, MessageCircle } from "lucide-react"
 
 const footerLinks = {
   platform: [
-    { name: "Proyectos", href: "#" },
-    { name: "Tokenomics", href: "#" },
-    { name: "Roadmap", href: "#" },
-    { name: "Whitepaper", href: "#" },
+    { name: "Proyectos", href: "/#proyectos" },
+    { name: "Cómo Funciona", href: "/#como-funciona" },
+    { name: "Tokenomics", href: "/#tokenomics" },
+    { name: "Whitepaper", href: "#", disabled: true },
   ],
   company: [
-    { name: "Nosotros", href: "#" },
-    { name: "Equipo", href: "#" },
-    { name: "Carreras", href: "#" },
-    { name: "Blog", href: "#" },
+    { name: "Nosotros", href: "/#nosotros" },
+    { name: "Equipo", href: "#", disabled: true },
+    { name: "Carreras", href: "#", disabled: true },
+    { name: "Blog", href: "#", disabled: true },
   ],
   legal: [
-    { name: "Términos", href: "#" },
-    { name: "Privacidad", href: "#" },
-    { name: "Cookies", href: "#" },
-    { name: "Licencias", href: "#" },
+    { name: "Términos", href: "#", disabled: true },
+    { name: "Privacidad", href: "#", disabled: true },
+    { name: "Cookies", href: "#", disabled: true },
   ],
   support: [
-    { name: "Centro de Ayuda", href: "#" },
-    { name: "Contacto", href: "#" },
-    { name: "FAQ", href: "#" },
-    { name: "API Docs", href: "#" },
+    { name: "Iniciar Sesión", href: "/login" },
+    { name: "Registrarse", href: "/register" },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "FAQ", href: "#", disabled: true },
   ],
 }
 
@@ -71,9 +70,13 @@ export function Footer() {
             <ul className="mt-4 space-y-3">
               {footerLinks.platform.map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {link.name}
-                  </Link>
+                  {"disabled" in link && link.disabled ? (
+                    <span className="text-sm text-muted-foreground/50 cursor-not-allowed">{link.name}</span>
+                  ) : (
+                    <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                      {link.name}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -84,9 +87,13 @@ export function Footer() {
             <ul className="mt-4 space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {link.name}
-                  </Link>
+                  {"disabled" in link && link.disabled ? (
+                    <span className="text-sm text-muted-foreground/50 cursor-not-allowed">{link.name}</span>
+                  ) : (
+                    <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                      {link.name}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -97,22 +104,30 @@ export function Footer() {
             <ul className="mt-4 space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {link.name}
-                  </Link>
+                  {"disabled" in link && link.disabled ? (
+                    <span className="text-sm text-muted-foreground/50 cursor-not-allowed">{link.name}</span>
+                  ) : (
+                    <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                      {link.name}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Soporte</h3>
+            <h3 className="text-sm font-semibold text-foreground">Acceso</h3>
             <ul className="mt-4 space-y-3">
               {footerLinks.support.map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {link.name}
-                  </Link>
+                  {"disabled" in link && link.disabled ? (
+                    <span className="text-sm text-muted-foreground/50 cursor-not-allowed">{link.name}</span>
+                  ) : (
+                    <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                      {link.name}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -126,7 +141,7 @@ export function Footer() {
               © 2026 LIKEN. Todos los derechos reservados.
             </p>
             <p className="text-sm text-muted-foreground">
-              Construido con tecnología blockchain para un futuro sostenible.
+              Plataforma de inversión en energía renovable con tecnología blockchain.
             </p>
           </div>
         </div>

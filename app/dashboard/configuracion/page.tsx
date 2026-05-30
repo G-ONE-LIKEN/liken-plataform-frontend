@@ -1,6 +1,5 @@
-import { Bell, Moon, Shield, Globe, Palette } from "lucide-react"
+import { Bell, Shield, Globe, Palette, Construction } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 
 const sections = [
   {
@@ -33,9 +32,20 @@ export default function ConfiguracionPage() {
         <p className="mt-1 text-muted-foreground">Personalizá tu experiencia en LIKEN</p>
       </div>
 
+      {/* Banner "en desarrollo" */}
+      <div className="flex items-start gap-4 rounded-xl border border-primary/20 bg-primary/5 px-5 py-4">
+        <Construction className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+        <div>
+          <p className="text-sm font-medium text-foreground">Estas funciones están en desarrollo</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Notificaciones, seguridad avanzada, preferencias de idioma y apariencia estarán disponibles próximamente.
+          </p>
+        </div>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2">
         {sections.map((section) => (
-          <Card key={section.title} className="bg-card">
+          <Card key={section.title} className="bg-card opacity-60">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <section.icon className="h-5 w-5 text-primary" />
@@ -44,9 +54,10 @@ export default function ConfiguracionPage() {
               <CardDescription>{section.description}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" size="sm" disabled>
-                Próximamente
-              </Button>
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                <Construction className="h-3 w-3" />
+                En desarrollo
+              </span>
             </CardContent>
           </Card>
         ))}

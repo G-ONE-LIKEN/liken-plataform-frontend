@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import { apiClient } from "@/shared/lib/api-client";
 import { Button } from "@/shared/ui/button";
@@ -63,30 +64,44 @@ export function LoginForm() {
         <Input
           label="Email"
           type="email"
-          placeholder="admin@admin.com"
+          placeholder="tu@email.com"
           value={form.email}
           error={errors.email}
           onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
         />
-        <Input
-          label="Contrasena"
-          type="password"
-          placeholder="******"
-          value={form.password}
-          error={errors.password}
-          onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-        />
+        <div className="grid gap-1">
+          <Input
+            label="Contraseña"
+            type="password"
+            placeholder="••••••••"
+            value={form.password}
+            error={errors.password}
+            onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+          />
+          <div className="text-right">
+            <span className="cursor-not-allowed text-xs text-[var(--color-foreground-subtle)] select-none">
+              ¿Olvidaste tu contraseña?
+            </span>
+          </div>
+        </div>
         {serverError && (
-          <div className="rounded-md bg-[rgba(214,69,93,0.12)] px-4 py-3 text-sm text-[var(--color-danger)]">
+          <div className="flex items-start gap-3 rounded-xl border border-[rgba(214,69,93,0.3)] bg-[rgba(214,69,93,0.08)] px-4 py-3 text-sm text-[var(--color-danger)]">
             {serverError}
           </div>
         )}
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Validando credenciales..." : "Entrar a LIKEN"}
+          {isSubmitting ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Validando...
+            </span>
+          ) : (
+            "Entrar a LIKEN"
+          )}
         </Button>
       </form>
       <div className="mt-4 text-sm text-[var(--color-foreground-muted)]">
-        Aun no tienes cuenta.{" "}
+        Aún no tienes cuenta.{" "}
         <Link href="/register" className="font-semibold text-[var(--color-primary)]">
           Registrate
         </Link>

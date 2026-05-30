@@ -1,36 +1,16 @@
 "use client"
 
-import { Sun, Wind, Droplets, Leaf, Filter, Search, TrendingUp, Plus } from "lucide-react"
+import { Filter, Search, Plus } from "lucide-react"
+import { Sun, Wind, Droplets, Leaf } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { AccessGate } from "@/features/auth/components/access-gate"
+import { ProjectCard } from "@/features/projects/components/project-card"
 import { useProjects } from "@/features/projects/hooks/use-projects"
 import { useSession } from "@/providers/session-provider"
-import type { EnergyType, ProjectState } from "@/features/projects/types/projects"
+import type { EnergyType } from "@/features/projects/types/projects"
 import { useState } from "react"
-
-const energyIcons: Record<EnergyType, React.ElementType> = {
-  SOLAR: Sun,
-  WIND: Wind,
-  HYDRO: Droplets,
-  BIOMASS: Leaf,
-}
-
-const energyLabels: Record<EnergyType, string> = {
-  SOLAR: "Solar",
-  WIND: "Eólica",
-  HYDRO: "Hidroeléctrica",
-  BIOMASS: "Biomasa",
-}
-
-const stateConfig: Record<ProjectState, { label: string; className: string }> = {
-  OPEN: { label: "Activo", className: "bg-green-500/10 text-green-500" },
-  PRE_OPEN: { label: "En Financiamiento", className: "bg-accent/10 text-accent" },
-  DRAFT: { label: "Borrador", className: "bg-muted text-muted-foreground" },
-  CLOSED: { label: "Cerrado", className: "bg-secondary text-secondary-foreground" },
-  CANCELLED: { label: "Cancelado", className: "bg-destructive/10 text-destructive" },
-}
 
 const filterTypes = [
   { label: "Todos", value: null },
@@ -106,73 +86,20 @@ export default function DashboardProjectsPage() {
         {projectsQuery.isLoading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-72 animate-pulse rounded-xl bg-secondary/50" />
+              <Skeleton key={i} className="h-72 rounded-xl" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <Filter className="mb-3 h-10 w-10 opacity-40" />
-            <p className="text-sm">No se encontraron proyectos.</p>
+            <p className="text-sm font-medium">No se encontraron proyectos</p>
+            <p className="mt-1 text-xs">Probá con otros filtros o términos de búsqueda.</p>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((project) => {
-              const Icon = energyIcons[project.energyType] ?? Leaf
-              const status = stateConfig[project.state] ?? stateConfig.DRAFT
-              const apy = parseFloat(project.expectedAnnualYield || "0").toFixed(1)
-              const minInv = parseFloat(project.minimumInvestment || "0")
-              return (
-                <Card
-                  key={project.id}
-                  className="overflow-hidden bg-card transition-all hover:border-primary/50"
-                >
-                  <CardContent className="p-0">
-                    <div className="flex items-center gap-4 border-b border-border p-4">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
-                        <Icon className="h-7 w-7 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="truncate font-semibold text-foreground">{project.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {project.country}
-                          {project.province ? ` · ${project.province}` : ""}
-                        </p>
-                      </div>
-                      <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}>
-                        {status.label}
-                      </span>
-                    </div>
-
-                    <div className="space-y-4 p-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">APY Estimado</span>
-                        <span className="flex items-center gap-1 text-lg font-bold text-primary">
-                          <TrendingUp className="h-4 w-4" />
-                          {apy}%
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>Tipo</span>
-                        <span className="font-medium text-foreground">
-                          {energyLabels[project.energyType] ?? project.energyType}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between border-t border-border pt-4">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Inversión mínima</p>
-                          <p className="font-semibold text-foreground">
-                            ${minInv.toLocaleString()} USD
-                          </p>
-                        </div>
-                        <Button size="sm">Invertir</Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+            {filtered.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
           </div>
         )}
       </div>

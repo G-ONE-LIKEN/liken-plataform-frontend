@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useSession } from "@/providers/session-provider"
 import { useProjects } from "@/features/projects/hooks/use-projects"
 import type { EnergyType } from "@/features/projects/types/projects"
@@ -93,7 +94,7 @@ export default function DashboardPage() {
               {projectsQuery.isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-16 animate-pulse rounded-lg bg-secondary/50" />
+                    <Skeleton key={i} className="h-16 rounded-lg" />
                   ))}
                 </div>
               ) : projects.length === 0 ? (

@@ -39,15 +39,12 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
           <Metric label="Inicio" value={formatDate(project.startDate)} />
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] pt-3">
-          <div className="text-xs text-[var(--color-foreground-subtle)]">
-            Catalogo operativo listo para leer desde el gateway actual.
-          </div>
+        <div className="flex items-center justify-end gap-3 border-t border-[var(--color-border)] pt-3">
           <Link
             href={`/projects/${project.id}`}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary-strong)] transition hover:text-[var(--color-primary)]"
           >
-            Abrir detalle
+            Ver detalle
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>

@@ -167,7 +167,14 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="truncate text-sm font-medium text-sidebar-foreground">{displayName}</p>
-              <p className="text-xs text-muted-foreground">{user?.role ?? "USER"}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs text-muted-foreground">{user?.role ?? "USER"}</p>
+                {permissions.isAdmin && (
+                  <span className="rounded bg-primary/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    Admin
+                  </span>
+                )}
+              </div>
             </div>
             <Button
               variant="ghost"
