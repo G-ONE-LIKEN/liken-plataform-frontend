@@ -4,7 +4,7 @@ export type NavItem = {
   href: string;
   label: string;
   description: string;
-  permission?: keyof PermissionContext;
+  permission?: keyof Pick<PermissionContext, "canReadUsers" | "isAdmin" | "isSuperAdmin" | "canManageRoles">;
 };
 
 export const publicNavigation: NavItem[] = [
@@ -51,5 +51,11 @@ export const dashboardNavigation: NavItem[] = [
     label: "Usuarios",
     description: "Gestion y revision de cuentas.",
     permission: "canReadUsers",
+  },
+  {
+    href: "/dashboard/admin/developers",
+    label: "Desarrolladores",
+    description: "Aprobar o rechazar cuentas de desarrolladores.",
+    permission: "isAdmin",
   },
 ];

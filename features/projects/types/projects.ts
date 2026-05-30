@@ -15,7 +15,13 @@ export type ProjectSummary = {
   totalTokens: string;
   tokenPrice: string;
   minimumInvestment: string;
+  softCap?: string;
+  hardCap?: string;
+  softCapDeadline?: string;
+  expectedOpenDate?: string;
+  raisedAmount?: string;
   expectedAnnualYield: string;
+  expectedAnnualProductionMWh?: string;
   startDate: string;
   endDate: string;
   createdAt: string;

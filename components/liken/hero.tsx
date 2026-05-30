@@ -33,13 +33,13 @@ export function Hero() {
           {/* CTA Buttons */}
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
             <Button size="lg" className="gap-2 bg-primary px-8 text-primary-foreground hover:bg-primary/90" asChild>
-              <Link href="/dashboard/proyectos">
-                Explorar Proyectos
+              <Link href="/register">
+                Crear Cuenta Gratis
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-secondary">
-              Ver Whitepaper
+            <Button size="lg" variant="outline" className="border-border px-8 text-foreground hover:bg-secondary" asChild>
+              <Link href="/login">Iniciar Sesión</Link>
             </Button>
           </div>
 

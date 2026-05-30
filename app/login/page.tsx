@@ -1,70 +1,62 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { LoginForm } from "@/features/auth/components/login-form";
-import { CheckCircle, Zap } from "lucide-react";
+import { Zap, TrendingUp, ShieldCheck, BarChart3 } from "lucide-react";
 
 const benefits = [
-  "Accedé a proyectos de energía solar, eólica e hidroeléctrica",
-  "Seguí el rendimiento de tus inversiones en tiempo real",
-  "Operá con USDC y tokens LKN desde tu wallet",
+  { icon: TrendingUp, text: "Monitoreá el rendimiento de tus inversiones en tiempo real" },
+  { icon: ShieldCheck, text: "Tu portafolio protegido con seguridad blockchain" },
+  { icon: BarChart3, text: "Operá en el marketplace y gestioná tus dividendos" },
 ]
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen bg-background">
-      {/* Left panel */}
-      <div className="relative hidden flex-1 flex-col justify-between overflow-hidden bg-card p-12 lg:flex">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
-        </div>
+    <main className="flex min-h-screen items-center justify-center px-6 py-10">
+      <div className="grid w-full max-w-5xl gap-8 lg:grid-cols-[1fr_420px] lg:items-center">
 
-        <div className="relative flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <Zap className="h-6 w-6 text-primary-foreground" />
+        <section className="space-y-6">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <Zap className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="text-lg font-bold text-foreground">LIKEN</span>
           </div>
-          <span className="text-xl font-bold text-foreground">LIKEN</span>
-        </div>
 
-        <div className="relative space-y-6">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">
-            Tu portafolio{" "}
-            <span className="text-primary">te espera</span>
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Iniciá sesión para ver tus inversiones, monitorear rendimientos y operar en el marketplace de energía renovable.
-          </p>
+          <div>
+            <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-primary mb-3">
+              Iniciar sesión
+            </div>
+            <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+              Tu portafolio te espera
+            </h1>
+            <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">
+              Ingresá a tu cuenta y accedé a tus inversiones, rendimientos y operaciones en el ecosistema LIKEN.
+            </p>
+          </div>
 
-          <ul className="space-y-3">
-            {benefits.map((benefit) => (
-              <li key={benefit} className="flex items-start gap-3 text-sm text-muted-foreground">
-                <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                {benefit}
+          <ul className="space-y-4">
+            {benefits.map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-start gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Icon className="h-4 w-4 text-primary" />
+                </div>
+                <span className="text-sm leading-relaxed text-muted-foreground">{text}</span>
               </li>
             ))}
           </ul>
-        </div>
 
-        <p className="relative text-sm text-muted-foreground">
-          ¿No tenés cuenta?{" "}
-          <Link href="/register" className="font-semibold text-primary hover:underline">
-            Registrate gratis
-          </Link>
-        </p>
-      </div>
-
-      {/* Right panel — form */}
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:max-w-md">
-        <div className="mb-8 flex items-center gap-2 lg:hidden">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <Zap className="h-5 w-5 text-primary-foreground" />
+          <div className="text-sm text-muted-foreground">
+            ¿No tenés cuenta?{" "}
+            <Link href="/register" className="font-semibold text-primary hover:underline">
+              Registrate gratis
+            </Link>
           </div>
-          <span className="text-xl font-bold text-foreground">LIKEN</span>
-        </div>
+        </section>
 
-        <Suspense fallback={<div className="h-80 w-full max-w-md animate-pulse rounded-xl bg-card" />}>
+        <Suspense fallback={<div className="h-80 w-full animate-pulse rounded-xl bg-card" />}>
           <LoginForm />
         </Suspense>
+
       </div>
     </main>
   );

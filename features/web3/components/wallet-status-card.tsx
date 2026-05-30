@@ -1,21 +1,35 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useChainId } from "wagmi";
+import { useAccount, useChainId, useBalance } from "wagmi";
 import { sepolia } from "wagmi/chains";
+import { formatUnits } from "viem";
 import { formatCompactAddress } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge";
 import { Card } from "@/shared/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function WalletStatusCard() {
   const { address, chain, isConnected } = useAccount();
   const chainId = useChainId();
   const isWrongNetwork = isConnected && chainId !== sepolia.id;
 
+  const { data: ethBalance, isLoading: ethLoading } = useBalance({
+    address,
+    query: { enabled: isConnected && !!address },
+  });
+
+  const formattedEth = ethBalance
+    ? Number(formatUnits(ethBalance.value, 18)).toLocaleString("es-AR", {
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4,
+      })
+    : null;
+
   return (
     <Card
-      title="Estado de wallet"
-      description="La conexion blockchain ya esta disponible, pero confinada a su modulo para no cargar el resto del panel."
+      title="Mi wallet blockchain"
+      description="Saldo y estado de tu wallet de MetaMask conectada a Sepolia."
       actions={
         <Badge tone={isWrongNetwork ? "danger" : isConnected ? "success" : "neutral"}>
           {isWrongNetwork ? "Wrong network" : isConnected ? "Conectada" : "Desconectada"}
@@ -23,11 +37,28 @@ export function WalletStatusCard() {
       }
     >
       <div className="grid gap-4">
+        {/* ETH Balance highlight */}
+        {isConnected && (
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-4">
+            <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-foreground-subtle)]">
+              Saldo ETH
+            </p>
+            {ethLoading ? (
+              <Skeleton className="mt-1 h-8 w-32" />
+            ) : (
+              <p className="mt-1 text-3xl font-bold text-[var(--color-foreground)]">
+                {formattedEth} <span className="text-lg font-medium text-[var(--color-foreground-muted)]">ETH</span>
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Details */}
         <div className="grid gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-4 text-sm text-[var(--color-foreground-muted)]">
           <Row label="Address" value={formatCompactAddress(address)} />
-          <Row label="Network" value={chain?.name ?? "Sin red"} />
-          <Row label="Sepolia requerida" value={String(sepolia.id)} />
+          <Row label="Red" value={chain?.name ?? "Sin red"} />
         </div>
+
         <div className="flex flex-wrap gap-3">
           <ConnectButton />
         </div>

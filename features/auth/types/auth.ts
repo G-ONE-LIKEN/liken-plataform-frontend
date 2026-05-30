@@ -3,7 +3,7 @@ export type AuthLoginRequest = {
   password: string;
 };
 
-export type AuthLoginResponse = string;
+export type AuthLoginResponse = { accessToken: string };
 
 export type AuthRegisterRequest = {
   email: string;
@@ -21,7 +21,8 @@ export type SessionUser = {
 
 export type PermissionContext = {
   // Derivados del nombre de rol — solo cuando el backend no expone un permiso granular
-  isAdmin: boolean;
+  isSuperAdmin: boolean;
+  isAdmin: boolean;      // true para ADMIN y SUPER_ADMIN
   isDeveloper: boolean;
 
   // Usuarios (permisos: user:read, user:update, user:delete)

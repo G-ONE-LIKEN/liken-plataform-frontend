@@ -3,13 +3,29 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, TrendingUp, Building2 } from "lucide-react";
 import { z } from "zod";
 import { apiClient } from "@/shared/lib/api-client";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
-import type { AuthRegisterRequest } from "@/features/auth/types/auth";
+
+type Role = "INVESTOR" | "DEVELOPER";
+
+const roles: { value: Role; label: string; description: string; icon: typeof TrendingUp }[] = [
+  {
+    value: "INVESTOR",
+    label: "Inversor",
+    description: "Quiero invertir en proyectos de energía renovable y recibir dividendos.",
+    icon: TrendingUp,
+  },
+  {
+    value: "DEVELOPER",
+    label: "Desarrollador",
+    description: "Quiero publicar proyectos energéticos. Requiere aprobación de LIKEN.",
+    icon: Building2,
+  },
+]
 
 const registerSchema = z
   .object({
@@ -24,12 +40,9 @@ const registerSchema = z
 
 export function RegisterForm() {
   const router = useRouter();
-  const [form, setForm] = useState<AuthRegisterRequest>({
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [errors, setErrors] = useState<Partial<Record<keyof AuthRegisterRequest, string>>>({});
+  const [selectedRole, setSelectedRole] = useState<Role>("INVESTOR");
+  const [form, setForm] = useState({ email: "", password: "", confirmPassword: "" });
+  const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,6 +70,7 @@ export function RegisterForm() {
       await apiClient.post("/api/users", {
         email: form.email,
         password: form.password,
+        roleName: selectedRole,
       });
       setSuccessMessage("Cuenta creada. Ya puedes iniciar sesion en LIKEN.");
       setForm({ email: "", password: "", confirmPassword: "" });
@@ -75,6 +89,47 @@ export function RegisterForm() {
       className="w-full max-w-md"
     >
       <form className="grid gap-4" onSubmit={handleSubmit}>
+
+        {/* Role selector */}
+        <div className="grid gap-2">
+          <p className="text-xs font-medium text-[var(--color-foreground-subtle)] uppercase tracking-wide">Tipo de cuenta</p>
+          <div className="grid grid-cols-2 gap-2">
+            {roles.map(({ value, label, description, icon: Icon }) => {
+              const active = selectedRole === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setSelectedRole(value)}
+                  className={`flex flex-col gap-2 rounded-xl border p-3 text-left transition-colors ${
+                    active
+                      ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]"
+                      : "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-primary-muted)]"
+                  }`}
+                >
+                  <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${active ? "bg-[var(--color-primary)]" : "bg-[var(--color-surface-raised)]"}`}>
+                    <Icon className={`h-4 w-4 ${active ? "text-white" : "text-[var(--color-foreground-subtle)]"}`} />
+                  </div>
+                  <div>
+                    <p className={`text-sm font-semibold ${active ? "text-[var(--color-primary)]" : "text-[var(--color-foreground)]"}`}>
+                      {label}
+                    </p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-[var(--color-foreground-subtle)]">
+                      {description}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {selectedRole === "DEVELOPER" && (
+          <div className="rounded-xl border border-[rgba(250,180,50,0.3)] bg-[rgba(250,180,50,0.08)] px-4 py-3 text-sm text-yellow-500">
+            Tu cuenta quedará <strong>pendiente de aprobación</strong>. Un administrador de LIKEN la revisará antes de que puedas publicar proyectos.
+          </div>
+        )}
+
         <Input
           label="Email"
           type="email"

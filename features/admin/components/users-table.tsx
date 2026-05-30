@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Search, MoreHorizontal, UserCheck, UserX, ShieldCheck, Loader2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { useUsers } from "@/features/admin/hooks/use-users";
 import { useRoles } from "@/features/admin/hooks/use-roles";
 import { useActivateUser, useDeactivateUser, useChangeUserRole } from "@/features/admin/hooks/use-user-actions";
@@ -81,9 +82,17 @@ export function UsersTable() {
     try {
       if (isActive) {
         await deactivate.mutateAsync(userId);
+        toast({ title: "Usuario desactivado", description: "El acceso fue revocado correctamente." });
       } else {
         await activate.mutateAsync(userId);
+        toast({ title: "Usuario activado", description: "El usuario puede ingresar nuevamente." });
       }
+    } catch (err) {
+      toast({
+        title: "No se pudo actualizar el usuario",
+        description: err instanceof Error ? err.message : "Error inesperado.",
+        variant: "destructive",
+      });
     } finally {
       setPendingUserId(null);
     }
@@ -93,6 +102,13 @@ export function UsersTable() {
     setPendingUserId(userId);
     try {
       await changeRole.mutateAsync({ userId, roleId });
+      toast({ title: "Rol actualizado", description: "El cambio se aplicó correctamente." });
+    } catch (err) {
+      toast({
+        title: "No se pudo cambiar el rol",
+        description: err instanceof Error ? err.message : "Error inesperado.",
+        variant: "destructive",
+      });
     } finally {
       setPendingUserId(null);
     }

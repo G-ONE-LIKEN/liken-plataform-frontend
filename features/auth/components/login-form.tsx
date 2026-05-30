@@ -44,7 +44,7 @@ export function LoginForm() {
     setIsSubmitting(true);
     try {
       const response = await apiClient.post<AuthLoginResponse>("/api/auth/login", form);
-      login(response.data);
+      login(response.data.accessToken);
       const nextPath = searchParams.get("next") ?? "/dashboard";
       router.push(nextPath);
     } catch (error) {

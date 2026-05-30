@@ -6,11 +6,15 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
+  useState,
   useSyncExternalStore,
 } from "react";
 import { useRouter } from "next/navigation";
 import { getPermissionContext, parseSessionToken } from "@/features/auth/lib/session";
 import type { PermissionContext, SessionUser } from "@/features/auth/types/auth";
+import { env } from "@/shared/config/env";
+
 
 const SESSION_TOKEN_KEY = "liken.session.token";
 const SESSION_TOKEN_COOKIE = "liken_session_token";
@@ -24,6 +28,7 @@ type SessionContextValue = {
   isLoading: boolean;
   login: (token: string) => void;
   logout: () => void;
+  refreshContext: () => Promise<void>;
 };
 
 const SessionContext = createContext<SessionContextValue | undefined>(undefined);
@@ -51,15 +56,12 @@ function readStoredToken() {
 
 function subscribe(callback: () => void) {
   if (typeof window === "undefined") return () => undefined;
-
   const handleStorage = (event: StorageEvent) => {
     if (event.key === SESSION_TOKEN_KEY) callback();
   };
   const handleSessionChange = () => callback();
-
   window.addEventListener("storage", handleStorage);
   window.addEventListener(SESSION_EVENT, handleSessionChange);
-
   return () => {
     window.removeEventListener("storage", handleStorage);
     window.removeEventListener(SESSION_EVENT, handleSessionChange);
@@ -75,20 +77,64 @@ function emitSessionChanged() {
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const token = useSyncExternalStore(subscribe, readStoredToken, () => null);
+  const [freshUser, setFreshUser] = useState<SessionUser | null>(null);
+  const fetchingRef = useRef(false);
 
-  const user = useMemo<SessionUser | null>(() => {
+  const jwtUser = useMemo<SessionUser | null>(() => {
     if (!token) return null;
     try {
       return parseSessionToken(token);
     } catch {
-      if (typeof window !== "undefined") {
-        window.localStorage.removeItem(SESSION_TOKEN_KEY);
-        clearCookieToken();
-        emitSessionChanged();
-      }
       return null;
     }
   }, [token]);
+
+  // Cleanup invalid token outside of render phase
+  useEffect(() => {
+    if (token && !jwtUser) {
+      window.localStorage.removeItem(SESSION_TOKEN_KEY);
+      clearCookieToken();
+      emitSessionChanged();
+    }
+  }, [token, jwtUser]);
+
+  // Fetch fresh role/permissions from the backend
+  const fetchContext = useCallback(async (currentToken: string) => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+    try {
+      const res = await fetch(`${env.apiUrl}/api/users/me`, {
+        headers: { Authorization: `Bearer ${currentToken}` },
+      });
+      if (!res.ok) return;
+      const body = await res.json();
+      const ctx = body.data;
+      if (!ctx) return;
+      setFreshUser((prev) => ({
+        ...(prev ?? { id: ctx.userId, email: "", exp: undefined }),
+        id: ctx.userId,
+        role: ctx.role ?? "BASIC",
+        permissions: Array.isArray(ctx.permissions) ? ctx.permissions : [],
+      }));
+    } catch {
+      // silently fail — fall back to JWT data
+    } finally {
+      fetchingRef.current = false;
+    }
+  }, []);
+
+  // Fetch on mount and whenever the token changes
+  useEffect(() => {
+    if (token && jwtUser) {
+      fetchContext(token);
+    } else {
+      setFreshUser(null);
+    }
+  }, [token, jwtUser, fetchContext]);
+
+  const refreshContext = useCallback(async () => {
+    if (token) await fetchContext(token);
+  }, [token, fetchContext]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -99,7 +145,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
       router.push("/login");
     };
-
     window.addEventListener("auth:unauthorized", handleUnauthorized);
     return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
   }, [router]);
@@ -107,27 +152,48 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback((nextToken: string) => {
     window.localStorage.setItem(SESSION_TOKEN_KEY, nextToken);
     writeCookieToken(nextToken);
+    setFreshUser(null);
     emitSessionChanged();
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await fetch(`${env.apiUrl}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // best-effort — clear local state regardless
+    }
     window.localStorage.removeItem(SESSION_TOKEN_KEY);
     clearCookieToken();
+    setFreshUser(null);
     emitSessionChanged();
     router.push("/login");
   }, [router]);
+
+  // Merge: use JWT for id/email/exp, use freshUser for role/permissions
+  const user = useMemo<SessionUser | null>(() => {
+    if (!jwtUser) return null;
+    return {
+      ...jwtUser,
+      role: freshUser?.role ?? jwtUser.role,
+      permissions: freshUser?.permissions ?? jwtUser.permissions,
+    };
+  }, [jwtUser, freshUser]);
 
   const value = useMemo<SessionContextValue>(
     () => ({
       token,
       user,
       permissions: getPermissionContext(user),
-      isAuthenticated: Boolean(token && user),
+      isAuthenticated: Boolean(token && jwtUser),
       isLoading: false,
       login,
       logout,
+      refreshContext,
     }),
-    [token, user, login, logout],
+    [token, user, jwtUser, login, logout, refreshContext],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

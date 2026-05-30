@@ -41,18 +41,18 @@ export function Header() {
           ))}
         </div>
 
-        <div className="hidden items-center gap-4 lg:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           {user ? (
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90" asChild>
               <Link href="/dashboard">Mi Dashboard</Link>
             </Button>
           ) : (
             <>
-              <Button variant="ghost" className="text-muted-foreground hover:text-foreground" asChild>
+              <Button variant="outline" className="border-border text-foreground hover:bg-secondary" asChild>
                 <Link href="/login">Iniciar Sesión</Link>
               </Button>
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90" asChild>
-                <Link href="/register">Comenzar</Link>
+                <Link href="/register">Crear Cuenta</Link>
               </Button>
             </>
           )}

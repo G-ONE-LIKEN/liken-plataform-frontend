@@ -20,6 +20,7 @@ import {
   ChevronDown,
   Users,
   ShieldCheck,
+  Building2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -57,6 +58,7 @@ const adminNavigation: {
 }[] = [
   { name: "Usuarios", href: "/dashboard/users", icon: Users, allow: (p) => p.canReadUsers },
   { name: "Roles y Permisos", href: "/dashboard/admin/roles", icon: ShieldCheck, allow: (p) => p.canManageRoles },
+  { name: "Desarrolladores", href: "/dashboard/admin/developers", icon: Building2, allow: (p) => p.isAdmin },
 ]
 
 function DashboardShell({ children }: { children: React.ReactNode }) {

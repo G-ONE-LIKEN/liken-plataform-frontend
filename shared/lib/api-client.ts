@@ -14,6 +14,8 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
 };
 
+const SESSION_TOKEN_KEY = "liken.session.token";
+
 function readCookieToken() {
   if (typeof document === "undefined") return null;
   const entry = document.cookie
@@ -22,22 +24,84 @@ function readCookieToken() {
   return entry ? decodeURIComponent(entry.split("=").slice(1).join("=")) : null;
 }
 
-async function request<T>(path: string, options: RequestOptions = {}) {
+function getStoredToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(SESSION_TOKEN_KEY) ?? readCookieToken();
+}
+
+let isRefreshing = false;
+let refreshQueue: Array<(token: string | null) => void> = [];
+
+async function attemptRefresh(): Promise<string | null> {
+  if (isRefreshing) {
+    return new Promise((resolve) => {
+      refreshQueue.push(resolve);
+    });
+  }
+
+  isRefreshing = true;
+  try {
+    const res = await fetch(`${env.apiUrl}/api/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      refreshQueue.forEach((cb) => cb(null));
+      refreshQueue = [];
+      return null;
+    }
+
+    const body = await res.json();
+    const newToken: string | null = body?.data?.accessToken ?? null;
+
+    if (newToken) {
+      window.localStorage.setItem(SESSION_TOKEN_KEY, newToken);
+      window.dispatchEvent(new Event("auth:session-changed"));
+    }
+
+    refreshQueue.forEach((cb) => cb(newToken));
+    refreshQueue = [];
+    return newToken;
+  } catch {
+    refreshQueue.forEach((cb) => cb(null));
+    refreshQueue = [];
+    return null;
+  } finally {
+    isRefreshing = false;
+  }
+}
+
+async function request<T>(
+  path: string,
+  options: RequestOptions = {},
+  isRetry = false
+): Promise<ApiResponse<T>> {
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
 
-  if (typeof window !== "undefined") {
-    const token = window.localStorage.getItem("liken.session.token") ?? readCookieToken();
-    if (token) headers.set("Authorization", `Bearer ${token}`);
-  }
+  const token = getStoredToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const response = await fetch(`${env.apiUrl}${path}`, {
     ...options,
+    credentials: "include",
     headers,
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 && !isRetry) {
+    const newToken = await attemptRefresh();
+    if (newToken) {
+      return request<T>(path, options, true);
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+    }
+    throw new UnauthorizedError("No autorizado");
+  }
+
+  if (response.status === 401 && isRetry) {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("auth:unauthorized"));
     }
@@ -52,7 +116,7 @@ async function request<T>(path: string, options: RequestOptions = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(payload?.message ?? "Ocurrio un error inesperado");
+    throw new Error(payload?.message ?? "Ocurrió un error inesperado");
   }
 
   if (!payload) {

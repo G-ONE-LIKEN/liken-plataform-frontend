@@ -40,10 +40,12 @@ export function parseSessionToken(token: string): SessionUser {
 export function getPermissionContext(user: SessionUser | null): PermissionContext {
   const perms = new Set(user?.permissions ?? []);
   const role = String(user?.role ?? "").toUpperCase();
-  const isAdmin = role.includes("ADMIN");
-  const isDeveloper = role.includes("DEVELOPER") || perms.has("project:create");
+  const isSuperAdmin = role === "SUPER_ADMIN";
+  const isAdmin = isSuperAdmin || role === "ADMIN";
+  const isDeveloper = role === "DEVELOPER" || perms.has("project:create");
 
   return {
+    isSuperAdmin,
     isAdmin,
     isDeveloper,
 
