@@ -91,7 +91,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [token]);
 
   useEffect(() => {
-    const handleUnauthorized = () => {
+    const clearSessionAndRedirect = () => {
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(SESSION_TOKEN_KEY);
         clearCookieToken();
@@ -100,8 +100,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       router.push("/login");
     };
 
-    window.addEventListener("auth:unauthorized", handleUnauthorized);
-    return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
+    window.addEventListener("auth:unauthorized", clearSessionAndRedirect);
+    window.addEventListener("auth:forbidden", clearSessionAndRedirect);
+    return () => {
+      window.removeEventListener("auth:unauthorized", clearSessionAndRedirect);
+      window.removeEventListener("auth:forbidden", clearSessionAndRedirect);
+    };
   }, [router]);
 
   const login = useCallback((nextToken: string) => {
