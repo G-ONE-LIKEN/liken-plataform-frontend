@@ -4,6 +4,7 @@ import type { PermissionContext, SessionUser } from "@/features/auth/types/auth"
 type DecodedToken = {
   id?: number | string;
   sub?: string;
+  email?: string;
   role?: string;
   permissions?: string[] | string;
   exp?: number;
@@ -24,9 +25,12 @@ export function parseSessionToken(token: string): SessionUser {
   const normalizedSub = String(decoded.sub ?? "");
   const looksLikeEmail = normalizedSub.includes("@");
 
+  // Prioridad: claim "email" explícito → sub si parece email → fallback
+  const email = decoded.email ?? (looksLikeEmail ? normalizedSub : `Usuario #${normalizedId || "sin-id"}`);
+
   return {
     id: normalizedId,
-    email: looksLikeEmail ? normalizedSub : `Usuario #${normalizedId || "sin-id"}`,
+    email,
     role: decoded.role ?? "USER",
     permissions,
     exp: decoded.exp,

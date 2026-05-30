@@ -1,12 +1,13 @@
 "use client"
 
-import { Filter, Search, Plus } from "lucide-react"
+import { Filter, Search } from "lucide-react"
 import { Sun, Wind, Droplets, Leaf } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AccessGate } from "@/features/auth/components/access-gate"
 import { ProjectCard } from "@/features/projects/components/project-card"
+import { CreateProjectDialog } from "@/features/projects/components/create-project-dialog"
 import { useProjects } from "@/features/projects/hooks/use-projects"
 import { useSession } from "@/providers/session-provider"
 import type { EnergyType } from "@/features/projects/types/projects"
@@ -57,12 +58,7 @@ export default function DashboardProjectsPage() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            {permissions.canManageProjects && (
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Crear
-              </Button>
-            )}
+            {permissions.canManageProjects && <CreateProjectDialog />}
           </div>
         </div>
 

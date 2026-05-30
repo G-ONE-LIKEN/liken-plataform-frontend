@@ -19,9 +19,18 @@ import {
   Search,
   ChevronDown,
   Users,
+  ShieldCheck,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { ProtectedRoute } from "@/features/auth/components/protected-route"
 import { useSession } from "@/providers/session-provider"
 
@@ -40,6 +49,7 @@ const secondaryNavigation = [
 
 const adminNavigation = [
   { name: "Usuarios", href: "/dashboard/users", icon: Users },
+  { name: "Roles y Permisos", href: "/dashboard/admin/roles", icon: ShieldCheck },
 ]
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -207,13 +217,44 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
               <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" />
             </Button>
 
-            <button className="hidden items-center gap-2 rounded-lg px-3 py-2 hover:bg-secondary lg:flex">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
-                <User className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="text-sm font-medium text-foreground">{displayName}</span>
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="hidden items-center gap-2 rounded-lg px-3 py-2 hover:bg-secondary lg:flex">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+                    <User className="h-4 w-4 text-primary-foreground" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{displayName}</span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuLabel className="font-normal">
+                  <p className="text-xs text-muted-foreground">Conectado como</p>
+                  <p className="truncate text-sm font-medium">{user?.email}</p>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/account">
+                    <User className="mr-2 h-4 w-4" />
+                    Mi Cuenta
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/configuracion">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Configuración
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={logout}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Cerrar Sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
