@@ -10,13 +10,6 @@ export class UnauthorizedError extends Error {
   }
 }
 
-export class ForbiddenError extends Error {
-  constructor(message = "No tenes permisos para realizar esta accion") {
-    super(message);
-    this.name = "ForbiddenError";
-  }
-}
-
 type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
 };
@@ -59,12 +52,6 @@ async function request<T>(path: string, options: RequestOptions = {}) {
   }
 
   if (!response.ok) {
-    if (response.status === 403) {
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("auth:forbidden"));
-      }
-      throw new ForbiddenError(payload?.message ?? "No tenes permisos para realizar esta accion");
-    }
     throw new Error(payload?.message ?? "Ocurrio un error inesperado");
   }
 
