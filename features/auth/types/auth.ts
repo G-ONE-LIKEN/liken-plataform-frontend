@@ -20,10 +20,24 @@ export type SessionUser = {
 };
 
 export type PermissionContext = {
+  // Derivados del nombre de rol — solo cuando el backend no expone un permiso granular
   isAdmin: boolean;
   isDeveloper: boolean;
+
+  // Usuarios (permisos: user:read, user:update, user:delete)
   canReadUsers: boolean;
   canManageUsers: boolean;
+
+  // KYC (permiso: kyc:review)
+  canReviewKyc: boolean;
+
+  // Proyectos (permisos: project:create, project:update, project:delete)
   canReadProjects: boolean;
   canManageProjects: boolean;
+
+  // Roles y Permisos — backend requiere ROLE_ADMIN explícitamente
+  canManageRoles: boolean;
+
+  // Inversiones (permiso: investment:create — servicio futuro)
+  canInvest: boolean;
 };

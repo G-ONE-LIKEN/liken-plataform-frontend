@@ -38,22 +38,39 @@ export function parseSessionToken(token: string): SessionUser {
 }
 
 export function getPermissionContext(user: SessionUser | null): PermissionContext {
-  const permissions = new Set(user?.permissions ?? []);
-  const normalizedRole = String(user?.role ?? "").toUpperCase();
-  const isAdmin = normalizedRole.includes("ADMIN");
-  const isDeveloper = normalizedRole.includes("DEVELOPER");
+  const perms = new Set(user?.permissions ?? []);
+  const role = String(user?.role ?? "").toUpperCase();
+  const isAdmin = role.includes("ADMIN");
+  const isDeveloper = role.includes("DEVELOPER") || perms.has("project:create");
 
   return {
     isAdmin,
     isDeveloper,
-    canReadUsers: isAdmin || permissions.has("user:read"),
-    canManageUsers: isAdmin || permissions.has("user:update") || permissions.has("user:delete"),
+
+    // user:read permite listar/ver usuarios
+    canReadUsers: isAdmin || perms.has("user:read"),
+
+    // user:update | user:delete permiten gestionar usuarios
+    canManageUsers: isAdmin || perms.has("user:update") || perms.has("user:delete"),
+
+    // kyc:review permite aprobar/rechazar documentos KYC
+    canReviewKyc: isAdmin || perms.has("kyc:review"),
+
+    // proyectos son públicos para lectura
     canReadProjects: true,
+
+    // project:create | project:update | project:delete
     canManageProjects:
       isAdmin ||
       isDeveloper ||
-      permissions.has("project:create") ||
-      permissions.has("project:update") ||
-      permissions.has("project:delete"),
+      perms.has("project:create") ||
+      perms.has("project:update") ||
+      perms.has("project:delete"),
+
+    // backend usa @PreAuthorize("hasRole('ROLE_ADMIN')") en roles CRUD
+    canManageRoles: isAdmin,
+
+    // investment:create (servicio futuro)
+    canInvest: isAdmin || perms.has("investment:create"),
   };
 }

@@ -174,7 +174,7 @@ export default function RolesPage() {
   const rolesQuery = useRolesDetail();
 
   return (
-    <AccessGate allow={(ctx) => ctx.isAdmin}>
+    <AccessGate allow={(ctx) => ctx.canManageRoles}>
       <div className="space-y-8">
         <PageHeader
           eyebrow="Administración"

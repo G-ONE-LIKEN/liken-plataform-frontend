@@ -16,7 +16,7 @@ export function AccessGate({ allow, children }: AccessGateProps) {
     return (
       <Card
         title="Acceso restringido"
-        description="Tu rol actual no tiene permisos suficientes para operar esta sección del panel."
+        description="No tenés los permisos necesarios para acceder a esta sección. Contactá a un administrador si creés que es un error."
       />
     );
   }

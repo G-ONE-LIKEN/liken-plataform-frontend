@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ProtectedRoute } from "@/features/auth/components/protected-route"
 import { useSession } from "@/providers/session-provider"
+import type { PermissionContext } from "@/features/auth/types/auth"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -47,9 +48,15 @@ const secondaryNavigation = [
   { name: "Configuración", href: "/dashboard/configuracion", icon: Settings },
 ]
 
-const adminNavigation = [
-  { name: "Usuarios", href: "/dashboard/users", icon: Users },
-  { name: "Roles y Permisos", href: "/dashboard/admin/roles", icon: ShieldCheck },
+// Cada ítem declara qué permiso necesita — no se usa isAdmin directamente
+const adminNavigation: {
+  name: string
+  href: string
+  icon: React.ElementType
+  allow: (p: PermissionContext) => boolean
+}[] = [
+  { name: "Usuarios", href: "/dashboard/users", icon: Users, allow: (p) => p.canReadUsers },
+  { name: "Roles y Permisos", href: "/dashboard/admin/roles", icon: ShieldCheck, allow: (p) => p.canManageRoles },
 ]
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -139,34 +146,38 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             )
           })}
 
-          {permissions.isAdmin && (
-            <>
-              <div className="my-4 border-t border-sidebar-border" />
-              <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Administración
-              </p>
-              {adminNavigation.map((item) => {
-                const isActive = pathname === item.href
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`
-                      flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors
-                      ${isActive
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent"
-                      }
-                    `}
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.name}
-                  </Link>
-                )
-              })}
-            </>
-          )}
+          {(() => {
+            const visible = adminNavigation.filter((item) => item.allow(permissions))
+            if (visible.length === 0) return null
+            return (
+              <>
+                <div className="my-4 border-t border-sidebar-border" />
+                <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Administración
+                </p>
+                {visible.map((item) => {
+                  const isActive = pathname === item.href
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={`
+                        flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors
+                        ${isActive
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent"
+                        }
+                      `}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {item.name}
+                    </Link>
+                  )
+                })}
+              </>
+            )
+          })()}
         </nav>
 
         {/* User section */}
