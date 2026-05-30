@@ -170,12 +170,11 @@ function RoleCard({ role }: { role: import("@/features/admin/hooks/use-permissio
   );
 }
 
-export default function RolesPage() {
+function RolesContent() {
   const rolesQuery = useRolesDetail();
 
   return (
-    <AccessGate allow={(ctx) => ctx.canManageRoles}>
-      <div className="space-y-8">
+    <div className="space-y-8">
         <PageHeader
           eyebrow="Administración"
           title="Roles y Permisos"
@@ -196,7 +195,14 @@ export default function RolesPage() {
             ))}
           </div>
         )}
-      </div>
+    </div>
+  );
+}
+
+export default function RolesPage() {
+  return (
+    <AccessGate allow={(ctx) => ctx.canManageRoles}>
+      <RolesContent />
     </AccessGate>
   );
 }
