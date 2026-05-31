@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { useDevelopers, useUpdateDeveloperStatus } from "@/features/admin/hooks/use-developers";
 import type { DeveloperStatus } from "@/features/admin/hooks/use-developers";
+import type { UserSummary } from "@/features/admin/types/users";
 
 const STATUS_CONFIG: Record<DeveloperStatus, { label: string; tone: "warning" | "success" | "danger" }> = {
   PENDING:  { label: "Pendiente",  tone: "warning" },
@@ -18,7 +19,7 @@ const STATUS_CONFIG: Record<DeveloperStatus, { label: string; tone: "warning" | 
   REJECTED: { label: "Rechazado",  tone: "danger"  },
 };
 
-function DeveloperRow({ user, showActions }: { user: any; showActions: boolean }) {
+function DeveloperRow({ user, showActions }: { user: UserSummary; showActions: boolean }) {
   const update = useUpdateDeveloperStatus();
   const [pending, setPending] = useState<DeveloperStatus | null>(null);
   const status: DeveloperStatus = user.developerStatus ?? "PENDING";
@@ -113,7 +114,7 @@ function DeveloperList({ status, showActions }: { status?: DeveloperStatus; show
 
   return (
     <div className="space-y-3">
-      {items.map((user: any) => (
+      {items.map((user) => (
         <DeveloperRow key={user.id} user={user} showActions={showActions} />
       ))}
     </div>

@@ -1,14 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Loader2, TrendingUp, Building2 } from "lucide-react";
+import { Building2, Check, Loader2, TrendingUp } from "lucide-react";
 import { z } from "zod";
 import { apiClient } from "@/shared/lib/api-client";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
+import { GoogleAuthButton } from "@/features/auth/components/google-auth-button";
+import { parseSessionToken } from "@/features/auth/lib/session";
+import { useSession } from "@/providers/session-provider";
+import type { AuthLoginResponse, AuthRegisterRequest } from "@/features/auth/types/auth";
 
 type Role = "INVESTOR" | "DEVELOPER";
 
@@ -16,36 +20,76 @@ const roles: { value: Role; label: string; description: string; icon: typeof Tre
   {
     value: "INVESTOR",
     label: "Inversor",
-    description: "Quiero invertir en proyectos de energía renovable y recibir dividendos.",
+    description: "Invertir en proyectos de energia renovable y recibir dividendos.",
     icon: TrendingUp,
   },
   {
     value: "DEVELOPER",
     label: "Desarrollador",
-    description: "Quiero publicar proyectos energéticos. Requiere aprobación de LIKEN.",
+    description: "Publicar proyectos energeticos con aprobacion de LIKEN.",
     icon: Building2,
   },
-]
+];
 
 const registerSchema = z
   .object({
+    firstName: z.string().min(2, "Ingresa tu nombre."),
+    lastName: z.string().min(2, "Ingresa tu apellido."),
     email: z.string().email("Ingresa un email valido."),
+    dni: z.string().regex(/^[0-9.\s-]{7,14}$/, "Ingresa un DNI valido."),
+    birthDate: z.string().min(1, "Ingresa tu fecha de nacimiento."),
+    phone: z.string().min(6, "Ingresa un telefono valido."),
+    country: z.string().min(2, "Ingresa tu pais."),
+    province: z.string().min(2, "Ingresa tu provincia."),
+    address: z.string().min(4, "Ingresa tu direccion."),
     password: z.string().min(6, "La contrasena debe tener al menos 6 caracteres."),
     confirmPassword: z.string().min(6, "Confirma la contrasena."),
+    termsAccepted: z.literal(true, {
+      error: "Debes aceptar los terminos y condiciones.",
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Las contrasenas no coinciden.",
     path: ["confirmPassword"],
+  })
+  .refine((data) => {
+    const value = new Date(`${data.birthDate}T00:00:00`);
+    const limit = new Date();
+    limit.setFullYear(limit.getFullYear() - 18);
+    return value <= limit;
+  }, {
+    message: "Debes ser mayor de 18 anos para registrarte.",
+    path: ["birthDate"],
   });
+
+const initialForm: AuthRegisterRequest = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  dni: "",
+  birthDate: "",
+  phone: "",
+  country: "Argentina",
+  province: "",
+  address: "",
+  password: "",
+  confirmPassword: "",
+  termsAccepted: false,
+};
 
 export function RegisterForm() {
   const router = useRouter();
+  const { login } = useSession();
   const [selectedRole, setSelectedRole] = useState<Role>("INVESTOR");
-  const [form, setForm] = useState({ email: "", password: "", confirmPassword: "" });
-  const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
+  const [form, setForm] = useState<AuthRegisterRequest>(initialForm);
+  const [errors, setErrors] = useState<Partial<Record<keyof AuthRegisterRequest, string>>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  function updateField<K extends keyof AuthRegisterRequest>(key: K, value: AuthRegisterRequest[K]) {
+    setForm((current) => ({ ...current, [key]: value }));
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,9 +100,18 @@ export function RegisterForm() {
     if (!parsed.success) {
       const fieldErrors = parsed.error.flatten().fieldErrors;
       setErrors({
+        firstName: fieldErrors.firstName?.[0],
+        lastName: fieldErrors.lastName?.[0],
         email: fieldErrors.email?.[0],
+        dni: fieldErrors.dni?.[0],
+        birthDate: fieldErrors.birthDate?.[0],
+        phone: fieldErrors.phone?.[0],
+        country: fieldErrors.country?.[0],
+        province: fieldErrors.province?.[0],
+        address: fieldErrors.address?.[0],
         password: fieldErrors.password?.[0],
         confirmPassword: fieldErrors.confirmPassword?.[0],
+        termsAccepted: fieldErrors.termsAccepted?.[0],
       });
       return;
     }
@@ -68,12 +121,21 @@ export function RegisterForm() {
 
     try {
       await apiClient.post("/api/users", {
+        firstName: form.firstName,
+        lastName: form.lastName,
         email: form.email,
+        dni: form.dni,
+        birthDate: form.birthDate,
+        phone: form.phone,
+        country: form.country,
+        province: form.province,
+        address: form.address,
+        termsAccepted: form.termsAccepted,
         password: form.password,
         roleName: selectedRole,
       });
       setSuccessMessage("Cuenta creada. Ya puedes iniciar sesion en LIKEN.");
-      setForm({ email: "", password: "", confirmPassword: "" });
+      setForm(initialForm);
       window.setTimeout(() => router.push("/login"), 900);
     } catch (error) {
       setServerError(error instanceof Error ? error.message : "No se pudo crear la cuenta.");
@@ -82,18 +144,33 @@ export function RegisterForm() {
     }
   }
 
+  const finishGoogleLogin = useCallback((token: string) => {
+    login(token);
+    const parsed = parseSessionToken(token);
+    router.push(parsed.profileCompleted ? "/dashboard" : "/complete-profile?next=%2Fdashboard");
+  }, [login, router]);
+
+  const handleGoogleCredential = useCallback(async (idToken: string) => {
+    setServerError(null);
+    const response = await apiClient.post<AuthLoginResponse>("/api/auth/google", {
+      idToken,
+      roleName: selectedRole,
+    });
+    finishGoogleLogin(response.data.accessToken);
+  }, [finishGoogleLogin, selectedRole]);
+
   return (
     <Card
       title="Crear cuenta"
-      description="Entra a LIKEN con una cuenta propia para explorar proyectos, seguir inversiones y preparar tu wallet."
-      className="w-full max-w-md"
+      description="Completa tus datos para operar con un perfil verificado y listo para KYC."
+      className="w-full max-w-2xl"
     >
-      <form className="grid gap-4" onSubmit={handleSubmit}>
-
-        {/* Role selector */}
-        <div className="grid gap-2">
-          <p className="text-xs font-medium text-[var(--color-foreground-subtle)] uppercase tracking-wide">Tipo de cuenta</p>
-          <div className="grid grid-cols-2 gap-2">
+      <form className="grid gap-5" onSubmit={handleSubmit}>
+        <section className="grid gap-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-foreground-subtle)]">
+            Tipo de cuenta
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
             {roles.map(({ value, label, description, icon: Icon }) => {
               const active = selectedRole === value;
               return (
@@ -101,80 +178,96 @@ export function RegisterForm() {
                   key={value}
                   type="button"
                   onClick={() => setSelectedRole(value)}
-                  className={`flex flex-col gap-2 rounded-xl border p-3 text-left transition-colors ${
+                  className={`flex min-h-28 flex-col gap-2 rounded-lg border p-3 text-left transition-colors ${
                     active
                       ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]"
                       : "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-primary-muted)]"
                   }`}
                 >
-                  <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${active ? "bg-[var(--color-primary)]" : "bg-[var(--color-surface-raised)]"}`}>
-                    <Icon className={`h-4 w-4 ${active ? "text-white" : "text-[var(--color-foreground-subtle)]"}`} />
+                  <div className="flex items-center justify-between gap-2">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-md ${active ? "bg-[var(--color-primary)]" : "bg-[var(--color-surface-raised)]"}`}>
+                      <Icon className={`h-4 w-4 ${active ? "text-white" : "text-[var(--color-foreground-subtle)]"}`} />
+                    </div>
+                    {active && <Check className="h-4 w-4 text-[var(--color-primary)]" />}
                   </div>
                   <div>
-                    <p className={`text-sm font-semibold ${active ? "text-[var(--color-primary)]" : "text-[var(--color-foreground)]"}`}>
-                      {label}
-                    </p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-[var(--color-foreground-subtle)]">
-                      {description}
-                    </p>
+                    <p className="text-sm font-semibold text-[var(--color-foreground)]">{label}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-[var(--color-foreground-subtle)]">{description}</p>
                   </div>
                 </button>
               );
             })}
           </div>
+        </section>
+
+        <GoogleAuthButton text="signup_with" onCredential={handleGoogleCredential} disabled={isSubmitting} />
+
+        <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-[var(--color-foreground-subtle)]">
+          <span className="h-px flex-1 bg-[var(--color-border)]" />
+          registro con email
+          <span className="h-px flex-1 bg-[var(--color-border)]" />
         </div>
 
-        {selectedRole === "DEVELOPER" && (
-          <div className="rounded-xl border border-[rgba(250,180,50,0.3)] bg-[rgba(250,180,50,0.08)] px-4 py-3 text-sm text-yellow-500">
-            Tu cuenta quedará <strong>pendiente de aprobación</strong>. Un administrador de LIKEN la revisará antes de que puedas publicar proyectos.
+        <section className="grid gap-3">
+          <p className="text-sm font-semibold text-[var(--color-foreground)]">Identidad</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input label="Nombre" value={form.firstName} error={errors.firstName} onChange={(event) => updateField("firstName", event.target.value)} />
+            <Input label="Apellido" value={form.lastName} error={errors.lastName} onChange={(event) => updateField("lastName", event.target.value)} />
+            <Input label="Email" type="email" placeholder="tu@email.com" value={form.email} error={errors.email} onChange={(event) => updateField("email", event.target.value)} />
+            <Input label="DNI" inputMode="numeric" value={form.dni} error={errors.dni} onChange={(event) => updateField("dni", event.target.value)} />
+            <Input label="Fecha de nacimiento" type="date" value={form.birthDate} error={errors.birthDate} onChange={(event) => updateField("birthDate", event.target.value)} />
+            <Input label="Telefono" value={form.phone} error={errors.phone} onChange={(event) => updateField("phone", event.target.value)} />
           </div>
-        )}
+        </section>
 
-        <Input
-          label="Email"
-          type="email"
-          placeholder="tu@email.com"
-          value={form.email}
-          error={errors.email}
-          onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-        />
-        <Input
-          label="Contrasena"
-          type="password"
-          placeholder="Minimo 6 caracteres"
-          value={form.password}
-          error={errors.password}
-          onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-        />
-        <Input
-          label="Confirmar contrasena"
-          type="password"
-          placeholder="Repite la contrasena"
-          value={form.confirmPassword}
-          error={errors.confirmPassword}
-          onChange={(event) => setForm((current) => ({ ...current, confirmPassword: event.target.value }))}
-        />
+        <section className="grid gap-3">
+          <p className="text-sm font-semibold text-[var(--color-foreground)]">Contacto</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input label="Pais" value={form.country} error={errors.country} onChange={(event) => updateField("country", event.target.value)} />
+            <Input label="Provincia" value={form.province} error={errors.province} onChange={(event) => updateField("province", event.target.value)} />
+            <Input label="Direccion" className="sm:col-span-2" value={form.address} error={errors.address} onChange={(event) => updateField("address", event.target.value)} />
+          </div>
+        </section>
+
+        <section className="grid gap-3">
+          <p className="text-sm font-semibold text-[var(--color-foreground)]">Seguridad</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input label="Contrasena" type="password" placeholder="Minimo 6 caracteres" value={form.password} error={errors.password} onChange={(event) => updateField("password", event.target.value)} />
+            <Input label="Confirmar contrasena" type="password" placeholder="Repite la contrasena" value={form.confirmPassword} error={errors.confirmPassword} onChange={(event) => updateField("confirmPassword", event.target.value)} />
+          </div>
+        </section>
+
+        <label className="flex items-start gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-sm text-[var(--color-foreground-muted)]">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 rounded border-[var(--color-border)]"
+            checked={form.termsAccepted}
+            onChange={(event) => updateField("termsAccepted", event.target.checked)}
+          />
+          <span>Acepto los terminos, condiciones y el tratamiento de datos necesario para operar en LIKEN.</span>
+        </label>
+        {errors.termsAccepted && <p className="text-xs text-[var(--color-danger)]">{errors.termsAccepted}</p>}
 
         {serverError && (
-          <div className="flex items-start gap-3 rounded-xl border border-[rgba(214,69,93,0.3)] bg-[rgba(214,69,93,0.08)] px-4 py-3 text-sm text-[var(--color-danger)]">
+          <div className="rounded-lg border border-[rgba(214,69,93,0.3)] bg-[rgba(214,69,93,0.08)] px-4 py-3 text-sm text-[var(--color-danger)]">
             {serverError}
           </div>
         )}
 
         {successMessage && (
-          <div className="flex items-start gap-3 rounded-xl border border-[rgba(38,116,88,0.3)] bg-[rgba(38,116,88,0.08)] px-4 py-3 text-sm text-[var(--color-success)]">
+          <div className="rounded-lg border border-[rgba(38,116,88,0.3)] bg-[rgba(38,116,88,0.08)] px-4 py-3 text-sm text-[var(--color-success)]">
             {successMessage}
           </div>
         )}
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button type="submit" className="h-11 w-full" disabled={isSubmitting}>
           {isSubmitting ? (
             <span className="inline-flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
               Creando cuenta...
             </span>
           ) : (
-            "Registrarme"
+            "Crear cuenta profesional"
           )}
         </Button>
       </form>

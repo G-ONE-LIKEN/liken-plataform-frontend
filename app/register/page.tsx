@@ -11,7 +11,7 @@ const benefits = [
 export default function RegisterPage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-10">
-      <div className="grid w-full max-w-5xl gap-8 lg:grid-cols-[1fr_420px] lg:items-center">
+      <div className="grid w-full max-w-6xl gap-8 lg:grid-cols-[0.9fr_640px] lg:items-center">
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">

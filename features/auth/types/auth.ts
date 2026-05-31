@@ -9,13 +9,25 @@ export type AuthRegisterRequest = {
   email: string;
   password: string;
   confirmPassword: string;
+  firstName: string;
+  lastName: string;
+  dni: string;
+  birthDate: string;
+  phone: string;
+  country: string;
+  province: string;
+  address: string;
+  termsAccepted: boolean;
 };
 
 export type SessionUser = {
   id: number;
   email: string;
+  firstName?: string;
+  lastName?: string;
   role: string;
   permissions: string[];
+  profileCompleted: boolean;
   exp?: number;
 };
 

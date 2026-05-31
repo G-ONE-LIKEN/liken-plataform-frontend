@@ -72,7 +72,12 @@ export function UsersTable() {
   const availableRoles = rolesQuery.data ?? [];
 
   const filtered = data.content.filter((u) => {
-    const matchesSearch = search === "" || u.email.toLowerCase().includes(search.toLowerCase());
+    const fullName = `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim().toLowerCase();
+    const matchesSearch =
+      search === "" ||
+      u.email.toLowerCase().includes(search.toLowerCase()) ||
+      fullName.includes(search.toLowerCase()) ||
+      (u.dni ?? "").includes(search);
     const matchesRole = roleFilter === "" || u.role?.name === roleFilter;
     return matchesSearch && matchesRole;
   });
@@ -122,7 +127,7 @@ export function UsersTable() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-foreground-subtle)]" />
           <input
             type="search"
-            placeholder="Buscar por email..."
+            placeholder="Buscar por nombre, email o DNI..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-10 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] pl-9 pr-4 text-sm text-[var(--color-foreground)] outline-none placeholder:text-[var(--color-foreground-subtle)] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-primary-soft)]"
@@ -152,9 +157,23 @@ export function UsersTable() {
               title: "Cuenta",
               render: (user) => (
                 <div>
-                  <div className="font-semibold">{user.email}</div>
-                  <div className="text-xs text-[var(--color-foreground-subtle)]">ID #{user.id}</div>
+                  <div className="font-semibold">
+                    {[user.firstName, user.lastName].filter(Boolean).join(" ") || user.email}
+                  </div>
+                  <div className="text-xs text-[var(--color-foreground-subtle)]">{user.email}</div>
+                  <div className="text-xs text-[var(--color-foreground-subtle)]">
+                    DNI {user.dni ?? "pendiente"} · ID #{user.id}
+                  </div>
                 </div>
+              ),
+            },
+            {
+              key: "profile",
+              title: "Perfil",
+              render: (user) => (
+                <Badge tone={user.profileCompleted ? "success" : "warning"}>
+                  {user.profileCompleted ? "Completo" : "Pendiente"}
+                </Badge>
               ),
             },
             {

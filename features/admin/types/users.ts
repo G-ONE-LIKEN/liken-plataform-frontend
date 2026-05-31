@@ -9,6 +9,12 @@ export type RoleSummary = {
 export type UserSummary = {
   id: number;
   email: string;
+  firstName?: string;
+  lastName?: string;
+  dni?: string;
+  profileCompleted?: boolean;
+  authProvider?: string;
+  developerStatus?: "PENDING" | "APPROVED" | "REJECTED";
   active: boolean;
   tier?: string;
   kycStatus?: string;

@@ -5,8 +5,11 @@ type DecodedToken = {
   id?: number | string;
   sub?: string;
   email?: string;
+  firstName?: string;
+  lastName?: string;
   role?: string;
   permissions?: string[] | string;
+  profileCompleted?: boolean;
   exp?: number;
 };
 
@@ -31,8 +34,11 @@ export function parseSessionToken(token: string): SessionUser {
   return {
     id: normalizedId,
     email,
+    firstName: decoded.firstName,
+    lastName: decoded.lastName,
     role: decoded.role ?? "USER",
     permissions,
+    profileCompleted: decoded.profileCompleted ?? false,
     exp: decoded.exp,
   };
 }

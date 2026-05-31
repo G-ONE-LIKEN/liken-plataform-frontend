@@ -17,6 +17,15 @@ type PaidLog = {
   tx: string
 }
 
+type PaidEvent = {
+  args: {
+    payer: string
+    amount: bigint
+    action: string
+  }
+  transactionHash: string
+}
+
 export function PaymentFeed() {
   const [logs, setLogs] = useState<PaidLog[]>([])
 
@@ -24,12 +33,12 @@ export function PaymentFeed() {
     address: PAYGW,
     abi: PAYGW_ABI,
     eventName: "Paid",
-    onLogs(events) {
-      const next = (events as any[]).map((e) => ({
-        payer: e.args.payer as string,
-        amount: e.args.amount as bigint,
-        action: e.args.action as string,
-        tx: e.transactionHash as string,
+    onLogs(events: PaidEvent[]) {
+      const next = events.map((e) => ({
+        payer: e.args.payer,
+        amount: e.args.amount,
+        action: e.args.action,
+        tx: e.transactionHash,
       }))
       setLogs((prev) => [...next, ...prev].slice(0, 20))
     },

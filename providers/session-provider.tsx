@@ -111,10 +111,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const ctx = body.data;
       if (!ctx) return;
       setFreshUser((prev) => ({
-        ...(prev ?? { id: ctx.userId, email: "", exp: undefined }),
+        ...(prev ?? { id: ctx.userId, email: "", exp: undefined, profileCompleted: false }),
         id: ctx.userId,
+        email: ctx.email ?? prev?.email ?? "",
+        firstName: ctx.firstName ?? prev?.firstName,
+        lastName: ctx.lastName ?? prev?.lastName,
         role: ctx.role ?? "BASIC",
         permissions: Array.isArray(ctx.permissions) ? ctx.permissions : [],
+        profileCompleted: Boolean(ctx.profileCompleted),
       }));
     } catch {
       // silently fail — fall back to JWT data
@@ -126,9 +130,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   // Fetch on mount and whenever the token changes
   useEffect(() => {
     if (token && jwtUser) {
-      fetchContext(token);
+      window.setTimeout(() => void fetchContext(token), 0);
     } else {
-      setFreshUser(null);
+      window.setTimeout(() => setFreshUser(null), 0);
     }
   }, [token, jwtUser, fetchContext]);
 
@@ -177,8 +181,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (!jwtUser) return null;
     return {
       ...jwtUser,
+      email: freshUser?.email || jwtUser.email,
+      firstName: freshUser?.firstName ?? jwtUser.firstName,
+      lastName: freshUser?.lastName ?? jwtUser.lastName,
       role: freshUser?.role ?? jwtUser.role,
       permissions: freshUser?.permissions ?? jwtUser.permissions,
+      profileCompleted: freshUser?.profileCompleted ?? jwtUser.profileCompleted,
     };
   }, [jwtUser, freshUser]);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -11,6 +11,8 @@ import { Card } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
 import { useSession } from "@/providers/session-provider";
 import type { AuthLoginRequest, AuthLoginResponse } from "@/features/auth/types/auth";
+import { GoogleAuthButton } from "@/features/auth/components/google-auth-button";
+import { parseSessionToken } from "@/features/auth/lib/session";
 
 const loginSchema = z.object({
   email: z.string().email("Ingresa un email valido."),
@@ -25,6 +27,13 @@ export function LoginForm() {
   const [errors, setErrors] = useState<Partial<Record<keyof AuthLoginRequest, string>>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const finishLogin = useCallback((token: string) => {
+    login(token);
+    const parsed = parseSessionToken(token);
+    const nextPath = searchParams.get("next") ?? "/dashboard";
+    router.push(parsed.profileCompleted ? nextPath : `/complete-profile?next=${encodeURIComponent(nextPath)}`);
+  }, [login, router, searchParams]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,15 +53,19 @@ export function LoginForm() {
     setIsSubmitting(true);
     try {
       const response = await apiClient.post<AuthLoginResponse>("/api/auth/login", form);
-      login(response.data.accessToken);
-      const nextPath = searchParams.get("next") ?? "/dashboard";
-      router.push(nextPath);
+      finishLogin(response.data.accessToken);
     } catch (error) {
       setServerError(error instanceof Error ? error.message : "No se pudo iniciar sesion.");
     } finally {
       setIsSubmitting(false);
     }
   }
+
+  const handleGoogleCredential = useCallback(async (idToken: string) => {
+    setServerError(null);
+    const response = await apiClient.post<AuthLoginResponse>("/api/auth/google", { idToken });
+    finishLogin(response.data.accessToken);
+  }, [finishLogin]);
 
   return (
     <Card
@@ -61,6 +74,12 @@ export function LoginForm() {
       className="w-full max-w-md"
     >
       <form className="grid gap-4" onSubmit={handleSubmit}>
+        <GoogleAuthButton text="signin_with" onCredential={handleGoogleCredential} disabled={isSubmitting} />
+        <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-[var(--color-foreground-subtle)]">
+          <span className="h-px flex-1 bg-[var(--color-border)]" />
+          o con email
+          <span className="h-px flex-1 bg-[var(--color-border)]" />
+        </div>
         <Input
           label="Email"
           type="email"
