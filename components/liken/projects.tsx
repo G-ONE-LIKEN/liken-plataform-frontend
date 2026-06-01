@@ -1,10 +1,15 @@
-import { Sun, Wind, CheckCircle2, MapPin, Zap, TrendingUp, Users, Clock } from "lucide-react"
+"use client"
+
+import Link from "next/link"
+import { motion } from "framer-motion"
+import { Sun, Wind, CheckCircle2, MapPin, Zap, TrendingUp, Users, Clock, ArrowUpRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 const projects = [
   {
     id: 1,
     name: "Parque Solar Mendoza",
-    type: "Solar fotovoltaico",
+    type: "Solar",
     icon: Sun,
     location: "Lavalle, Mendoza",
     capacity: "3 MW",
@@ -13,6 +18,8 @@ const projects = [
     investors: 138,
     duration: "12 meses",
     completedAt: "Ago 2023",
+    funded: 100,
+    minInvestment: "$10",
   },
   {
     id: 2,
@@ -26,11 +33,13 @@ const projects = [
     investors: 214,
     duration: "18 meses",
     completedAt: "Mar 2024",
+    funded: 100,
+    minInvestment: "$10",
   },
   {
     id: 3,
     name: "Solar Puna Norte",
-    type: "Solar fotovoltaico",
+    type: "Solar",
     icon: Sun,
     location: "Susques, Jujuy",
     capacity: "4 MW",
@@ -39,100 +48,143 @@ const projects = [
     investors: 172,
     duration: "14 meses",
     completedAt: "Nov 2023",
+    funded: 100,
+    minInvestment: "$10",
   },
 ]
 
 export function Projects() {
   return (
-    <section id="proyectos" className="py-24">
+    <section id="proyectos" className="py-24 border-t border-border/40">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
 
         {/* Section header */}
-        <div className="mx-auto max-w-2xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
-            <CheckCircle2 className="h-4 w-4" />
-            Proyectos finalizados
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+        >
+          <div>
+            <div className="inline-flex items-center gap-2 border border-primary/30 bg-primary/8 px-3 py-1.5 rounded-sm text-xs font-medium text-primary tracking-wide mb-4">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Proyectos finalizados
+            </div>
+            <h2 className="text-3xl font-bold tracking-[-0.02em] text-foreground sm:text-4xl text-balance max-w-lg">
+              Ya lo hicimos en Argentina
+            </h2>
+            <p className="mt-3 text-base text-muted-foreground max-w-xl">
+              Estos parques completaron su ciclo y están generando dividendos para sus inversores.
+            </p>
           </div>
-          <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Ya lo hicimos en Argentina
-          </h2>
-          <p className="mt-4 text-pretty text-lg leading-relaxed text-muted-foreground">
-            Estos parques ya completaron su ciclo de financiamiento y están generando energía — y dividendos — para sus inversores.
-          </p>
-        </div>
+          <Link href="/projects" className="shrink-0">
+            <Button variant="outline" size="sm" className="gap-1.5 border-border text-muted-foreground hover:text-foreground">
+              Ver proyectos activos
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        </motion.div>
 
         {/* Cards */}
-        <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
-            <div
+        <div className="grid gap-px bg-border/60 border border-border/60 rounded-lg overflow-hidden md:grid-cols-3">
+          {projects.map((project, index) => (
+            <motion.div
               key={project.id}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card transition-all hover:border-primary/40"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.45, delay: index * 0.1 }}
+              className="group flex flex-col bg-card transition-colors hover:bg-card/80"
             >
               {/* Header */}
               <div className="flex items-start justify-between p-6 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/8">
                     <project.icon className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold leading-tight text-foreground">{project.name}</h3>
+                    <h3 className="text-sm font-semibold leading-tight text-foreground">
+                      {project.name}
+                    </h3>
                     <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPin className="h-3 w-3 shrink-0" />
-                      {project.location}
+                      <span>{project.location}</span>
                     </div>
                   </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                  <CheckCircle2 className="h-3 w-3" />
-                  Finalizado
-                </div>
+                <span className="shrink-0 border border-border/60 bg-muted/30 px-2 py-0.5 rounded-sm text-xs text-muted-foreground">
+                  {project.type}
+                </span>
               </div>
 
-              {/* APY highlight */}
-              <div className="mx-6 rounded-xl bg-primary/8 px-4 py-3 ring-1 ring-primary/15">
+              {/* APY + raised */}
+              <div className="mx-6 mb-4 rounded border border-border/80 bg-background/40 px-4 py-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground">APY entregado</p>
-                    <div className="mt-0.5 flex items-center gap-1.5">
-                      <TrendingUp className="h-4 w-4 text-primary" />
-                      <span className="text-2xl font-bold text-primary">{project.apy}</span>
+                    <p className="text-xs text-muted-foreground mb-0.5">APY entregado</p>
+                    <div className="flex items-center gap-1.5">
+                      <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-2xl font-bold tabular-nums tracking-tight text-primary">
+                        {project.apy}
+                      </span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Total recaudado</p>
-                    <p className="mt-0.5 text-xl font-bold text-foreground">{project.totalRaised}</p>
+                    <p className="text-xs text-muted-foreground mb-0.5">Total recaudado</p>
+                    <p className="text-xl font-bold tabular-nums tracking-tight text-foreground">
+                      {project.totalRaised}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Stats grid */}
-              <div className="grid grid-cols-2 gap-px bg-border/30 mx-6 mt-4 overflow-hidden rounded-xl">
-                <div className="bg-card px-4 py-3">
-                  <p className="text-xs text-muted-foreground">Tipo</p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground">{project.type}</p>
+              {/* Funding progress */}
+              <div className="px-6 mb-4">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="text-muted-foreground">Financiado</span>
+                  <span className="font-medium text-foreground tabular-nums">{project.funded}%</span>
                 </div>
-                <div className="bg-card px-4 py-3">
-                  <p className="text-xs text-muted-foreground">Capacidad</p>
-                  <div className="mt-0.5 flex items-center gap-1">
-                    <Zap className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-sm font-medium text-foreground">{project.capacity}</span>
+                <div className="h-1.5 bg-border/60 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full"
+                    style={{ width: `${project.funded}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-xs mt-2 text-muted-foreground">
+                  <span>Inversión mínima: <span className="text-foreground font-medium">{project.minInvestment}</span></span>
+                  <div className="flex items-center gap-1">
+                    <Zap className="h-3 w-3 text-primary" />
+                    <span>{project.capacity}</span>
                   </div>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="mt-auto flex items-center justify-between px-6 py-4 text-xs text-muted-foreground">
+              <div className="mt-auto border-t border-border/40 px-6 py-3 flex items-center justify-between text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
-                  <Users className="h-3.5 w-3.5" />
+                  <Users className="h-3 w-3" />
                   <span>{project.investors} inversores</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" />
+                  <Clock className="h-3 w-3" />
                   <span>{project.duration}</span>
                 </div>
-                <span className="font-medium text-foreground/60">Cerrado {project.completedAt}</span>
+                <span className="text-foreground/50">Cerrado {project.completedAt}</span>
               </div>
-            </div>
+
+              {/* CTA */}
+              <div className="px-6 pb-6 pt-3">
+                <Link href="/projects">
+                  <Button
+                    size="sm"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    Ver proyectos similares
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
           ))}
         </div>
 

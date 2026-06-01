@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { LoginForm } from "@/features/auth/components/login-form";
-import { Zap, TrendingUp, ShieldCheck, BarChart3 } from "lucide-react";
+import { Zap, TrendingUp, ShieldCheck, BarChart3, ArrowLeft } from "lucide-react";
 
 const benefits = [
   { icon: TrendingUp, text: "Monitoreá el rendimiento de tus inversiones en tiempo real" },
@@ -15,6 +15,14 @@ export default function LoginPage() {
       <div className="grid w-full max-w-5xl gap-8 lg:grid-cols-[1fr_420px] lg:items-center">
 
         <section className="space-y-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Volver al inicio
+          </Link>
+
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
               <Zap className="h-5 w-5 text-primary-foreground" />

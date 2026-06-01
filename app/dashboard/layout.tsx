@@ -85,11 +85,11 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       `}>
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-6">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
-              <Zap className="h-5 w-5 text-sidebar-primary-foreground" />
+          <Link href="/dashboard" className="flex items-center gap-2.5">
+            <div className="relative flex h-7 w-7 items-center justify-center rounded border border-sidebar-primary/50 bg-sidebar-primary/10">
+              <Zap className="h-3.5 w-3.5 text-sidebar-primary" />
             </div>
-            <span className="text-xl font-bold text-sidebar-foreground">LIKEN</span>
+            <span className="text-sm font-bold tracking-[0.14em] uppercase text-sidebar-foreground">LIKEN</span>
           </Link>
           <button onClick={() => setSidebarOpen(false)} className="text-sidebar-foreground lg:hidden">
             <X className="h-5 w-5" />

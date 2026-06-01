@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { RegisterForm } from "@/features/auth/components/register-form";
-import { Zap, TrendingUp, Leaf, Wallet } from "lucide-react";
+import { Zap, TrendingUp, Leaf, Wallet, ArrowLeft } from "lucide-react";
 
 const benefits = [
   { icon: Leaf, text: "Invertí en proyectos reales de energía solar, eólica e hídrica" },
@@ -10,9 +10,19 @@ const benefits = [
 
 export default function RegisterPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-10">
-      <div className="grid w-full max-w-6xl gap-8 lg:grid-cols-[0.9fr_640px] lg:items-center">
-        <section className="space-y-6">
+    <main className="min-h-screen px-6 lg:px-0">
+      <div className="mx-auto grid w-full max-w-6xl lg:min-h-screen lg:grid-cols-[1fr_620px]">
+
+        {/* Left — sticky marketing panel */}
+        <section className="flex flex-col justify-center gap-6 py-12 lg:sticky lg:top-0 lg:h-screen lg:py-16 lg:pr-12">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Volver al inicio
+          </Link>
+
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
               <Zap className="h-5 w-5 text-primary-foreground" />
@@ -21,10 +31,10 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-primary mb-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-primary mb-3">
               Crear cuenta
-            </div>
-            <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            </p>
+            <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl text-balance">
               Empezá a invertir hoy
             </h1>
             <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">
@@ -51,7 +61,11 @@ export default function RegisterPage() {
           </div>
         </section>
 
-        <RegisterForm />
+        {/* Right — scrollable form */}
+        <div className="flex flex-col justify-center py-12 lg:min-h-screen lg:px-12 lg:py-16">
+          <RegisterForm />
+        </div>
+
       </div>
     </main>
   );

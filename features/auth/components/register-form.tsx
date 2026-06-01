@@ -200,14 +200,6 @@ export function RegisterForm() {
           </div>
         </section>
 
-        <GoogleAuthButton text="signup_with" onCredential={handleGoogleCredential} disabled={isSubmitting} />
-
-        <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-[var(--color-foreground-subtle)]">
-          <span className="h-px flex-1 bg-[var(--color-border)]" />
-          registro con email
-          <span className="h-px flex-1 bg-[var(--color-border)]" />
-        </div>
-
         <section className="grid gap-3">
           <p className="text-sm font-semibold text-[var(--color-foreground)]">Identidad</p>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -248,6 +240,13 @@ export function RegisterForm() {
         </label>
         {errors.termsAccepted && <p className="text-xs text-[var(--color-danger)]">{errors.termsAccepted}</p>}
 
+        <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-[var(--color-foreground-subtle)]">
+          <span className="h-px flex-1 bg-[var(--color-border)]" />
+          o registrate con
+          <span className="h-px flex-1 bg-[var(--color-border)]" />
+        </div>
+        <GoogleAuthButton onCredential={handleGoogleCredential} disabled={isSubmitting} />
+
         {serverError && (
           <div className="rounded-lg border border-[rgba(214,69,93,0.3)] bg-[rgba(214,69,93,0.08)] px-4 py-3 text-sm text-[var(--color-danger)]">
             {serverError}
@@ -271,13 +270,6 @@ export function RegisterForm() {
           )}
         </Button>
       </form>
-
-      <div className="mt-4 text-sm text-[var(--color-foreground-muted)]">
-        Ya tienes cuenta.{" "}
-        <Link href="/login" className="font-semibold text-[var(--color-primary)]">
-          Iniciar sesion
-        </Link>
-      </div>
     </Card>
   );
 }

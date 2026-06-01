@@ -74,12 +74,6 @@ export function LoginForm() {
       className="w-full max-w-md"
     >
       <form className="grid gap-4" onSubmit={handleSubmit}>
-        <GoogleAuthButton text="signin_with" onCredential={handleGoogleCredential} disabled={isSubmitting} />
-        <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-[var(--color-foreground-subtle)]">
-          <span className="h-px flex-1 bg-[var(--color-border)]" />
-          o con email
-          <span className="h-px flex-1 bg-[var(--color-border)]" />
-        </div>
         <Input
           label="Email"
           type="email"
@@ -118,6 +112,12 @@ export function LoginForm() {
             "Entrar a LIKEN"
           )}
         </Button>
+        <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-[var(--color-foreground-subtle)]">
+          <span className="h-px flex-1 bg-[var(--color-border)]" />
+          o continuá con
+          <span className="h-px flex-1 bg-[var(--color-border)]" />
+        </div>
+        <GoogleAuthButton onCredential={handleGoogleCredential} disabled={isSubmitting} />
       </form>
       <div className="mt-4 text-sm text-[var(--color-foreground-muted)]">
         Aún no tienes cuenta.{" "}
