@@ -90,7 +90,16 @@ async function request<T>(
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  if (response.status === 401 && !isRetry) {
+  let payload: ApiResponse<T> | null = null;
+  try {
+    payload = (await response.json()) as ApiResponse<T>;
+  } catch {
+    payload = null;
+  }
+
+  const hasSessionToken = Boolean(token);
+
+  if (response.status === 401 && !isRetry && hasSessionToken) {
     const newToken = await attemptRefresh();
     if (newToken) {
       return request<T>(path, options, true);
@@ -101,18 +110,11 @@ async function request<T>(
     throw new UnauthorizedError("No autorizado");
   }
 
-  if (response.status === 401 && isRetry) {
+  if (response.status === 401 && isRetry && hasSessionToken) {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("auth:unauthorized"));
     }
     throw new UnauthorizedError("No autorizado");
-  }
-
-  let payload: ApiResponse<T> | null = null;
-  try {
-    payload = (await response.json()) as ApiResponse<T>;
-  } catch {
-    payload = null;
   }
 
   if (!response.ok) {

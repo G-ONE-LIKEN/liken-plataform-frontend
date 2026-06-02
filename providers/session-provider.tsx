@@ -79,6 +79,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const token = useSyncExternalStore(subscribe, readStoredToken, () => null);
   const [freshUser, setFreshUser] = useState<SessionUser | null>(null);
   const fetchingRef = useRef(false);
+  // En SSR/primer render client, useSyncExternalStore reporta el server snapshot (null)
+  // antes de leer localStorage. Sin un flag de hidratación, ProtectedRoute ve
+  // isAuthenticated=false durante un tick y redirige al login. Esperamos al mount
+  // para reportar el estado real.
+  const [isHydrated, setIsHydrated] = useState(false);
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const jwtUser = useMemo<SessionUser | null>(() => {
     if (!token) return null;
@@ -196,12 +204,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       user,
       permissions: getPermissionContext(user),
       isAuthenticated: Boolean(token && jwtUser),
-      isLoading: false,
+      isLoading: !isHydrated,
       login,
       logout,
       refreshContext,
     }),
-    [token, user, jwtUser, login, logout, refreshContext],
+    [token, user, jwtUser, login, logout, refreshContext, isHydrated],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

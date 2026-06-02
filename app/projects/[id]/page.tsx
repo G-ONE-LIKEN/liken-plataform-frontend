@@ -23,6 +23,7 @@ const ENERGY_LABELS = {
 };
 
 const STATE_CONFIG: Record<string, { label: string; tone: "success" | "warning" | "neutral" | "danger" }> = {
+  PENDING_APPROVAL: { label: "Pendiente de aprobación", tone: "warning" },
   DRAFT:     { label: "Borrador",            tone: "neutral" },
   PRE_OPEN:  { label: "En construcción",     tone: "warning" },
   OPEN:      { label: "Abierto a inversión", tone: "success" },

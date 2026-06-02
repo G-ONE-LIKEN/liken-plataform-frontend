@@ -10,7 +10,13 @@ function getStateTone(state: ProjectSummary["state"]) {
   if (state === "PRE_OPEN") return "brand";
   if (state === "CANCELLED") return "danger";
   if (state === "CLOSED") return "warning";
+  if (state === "PENDING_APPROVAL") return "warning";
   return "neutral";
+}
+
+function getStateLabel(state: ProjectSummary["state"]) {
+  if (state === "PENDING_APPROVAL") return "PENDIENTE";
+  return state;
 }
 
 export function ProjectCard({ project }: { project: ProjectSummary }) {
@@ -18,7 +24,7 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
     <Card
       title={project.name}
       description={project.description}
-      actions={<Badge tone={getStateTone(project.state)}>{project.state}</Badge>}
+      actions={<Badge tone={getStateTone(project.state)}>{getStateLabel(project.state)}</Badge>}
     >
       <div className="grid gap-4">
         <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--color-foreground-muted)]">

@@ -1,6 +1,12 @@
 import type { PageResponse } from "@/shared/types/api";
 
-export type ProjectState = "DRAFT" | "PRE_OPEN" | "OPEN" | "CLOSED" | "CANCELLED";
+export type ProjectState =
+  | "PENDING_APPROVAL"
+  | "DRAFT"
+  | "PRE_OPEN"
+  | "OPEN"
+  | "CLOSED"
+  | "CANCELLED";
 export type EnergyType = "SOLAR" | "WIND" | "HYDRO" | "BIOMASS";
 
 export type ProjectSummary = {
@@ -26,6 +32,9 @@ export type ProjectSummary = {
   endDate: string;
   createdAt: string;
   updatedAt: string;
+  approvedBy?: number | null;
+  approvedAt?: string | null;
+  rejectionReason?: string | null;
 };
 
 export type ProjectDetail = ProjectSummary & {

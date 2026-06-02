@@ -55,3 +55,27 @@ export function useChangeProjectState() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
   });
 }
+
+export function useApproveProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiClient.post<ProjectSummary>(`/api/projects/${id}/approve`, {});
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+  });
+}
+
+export function useRejectProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason?: string }) => {
+      const response = await apiClient.post<ProjectSummary>(`/api/projects/${id}/reject`, {
+        reason: reason ?? null,
+      });
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+  });
+}

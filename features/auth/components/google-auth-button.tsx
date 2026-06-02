@@ -23,7 +23,6 @@ declare global {
               shape?: "rectangular" | "pill" | "circle" | "square";
             },
           ) => void;
-          prompt?: () => void;
         };
       };
     };
@@ -43,6 +42,7 @@ function loadGoogleScript() {
         existing.addEventListener("error", () => reject(new Error("No se pudo cargar Google.")), { once: true });
         return;
       }
+
       const script = document.createElement("script");
       script.src = "https://accounts.google.com/gsi/client";
       script.async = true;
@@ -73,11 +73,34 @@ type GoogleAuthButtonProps = {
   disabled?: boolean;
 };
 
-export function GoogleAuthButton({ onCredential, disabled }: GoogleAuthButtonProps) {
-  const hiddenRef = useRef<HTMLDivElement>(null);
+export function GoogleAuthButton({
+  text = "continue_with",
+  onCredential,
+  disabled,
+}: GoogleAuthButtonProps) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const googleButtonRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [buttonWidth, setButtonWidth] = useState(360);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const syncWidth = () => {
+      const nextWidth = Math.max(Math.round(host.getBoundingClientRect().width), 240);
+      setButtonWidth((current) => (current === nextWidth ? current : nextWidth));
+    };
+
+    syncWidth();
+
+    const observer = new ResizeObserver(syncWidth);
+    observer.observe(host);
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,8 +108,9 @@ export function GoogleAuthButton({ onCredential, disabled }: GoogleAuthButtonPro
 
     loadGoogleScript()
       .then(() => {
-        if (cancelled || !hiddenRef.current || !window.google?.accounts?.id) return;
-        hiddenRef.current.innerHTML = "";
+        if (cancelled || !googleButtonRef.current || !window.google?.accounts?.id) return;
+
+        googleButtonRef.current.innerHTML = "";
         window.google.accounts.id.initialize({
           client_id: env.googleClientId,
           callback: async (response) => {
@@ -102,60 +126,50 @@ export function GoogleAuthButton({ onCredential, disabled }: GoogleAuthButtonPro
             }
           },
         });
-        // Render Google's button in the hidden off-screen div
-        window.google.accounts.id.renderButton(hiddenRef.current, {
+
+        window.google.accounts.id.renderButton(googleButtonRef.current, {
           theme: "outline",
           size: "large",
-          width: 360,
+          width: buttonWidth,
+          text,
+          shape: "rectangular",
         });
         setReady(true);
       })
       .catch((err) =>
-        setError(err instanceof Error ? err.message : "No se pudo cargar Google.")
+        setError(err instanceof Error ? err.message : "No se pudo cargar Google."),
       );
 
-    return () => { cancelled = true; };
-  }, [disabled, onCredential]);
+    return () => {
+      cancelled = true;
+    };
+  }, [buttonWidth, disabled, onCredential, text]);
 
   if (!env.googleClientId) {
     return <p className="text-xs text-[var(--color-danger)]">Google OAuth no esta configurado.</p>;
   }
 
-  const handleClick = () => {
-    if (disabled || isLoading || !ready) return;
-    // Google expone un div[role="button"] en nuestro DOM (sobre el iframe cross-origin)
-    const wrapper = hiddenRef.current?.querySelector('div[role="button"]') as HTMLElement | null;
-    if (wrapper) {
-      wrapper.click();
-    } else {
-      // Fallback: One Tap prompt
-      window.google?.accounts?.id?.prompt?.();
-    }
-  };
-
   return (
     <div className="grid gap-2">
-      {/* Hidden off-screen div — Google renderiza su estructura de auth aquí */}
-      <div
-        ref={hiddenRef}
-        aria-hidden="true"
-        style={{ position: "fixed", top: "-9999px", left: "-9999px", opacity: 0, pointerEvents: "none" }}
-      />
+      <div ref={hostRef} className="relative w-full">
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none flex w-full items-center justify-center gap-3 rounded border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-2.5 text-sm font-medium text-[var(--color-foreground)] transition-colors ${disabled || isLoading || !ready ? "opacity-50" : ""}`}
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin text-[var(--color-foreground-muted)]" />
+          ) : (
+            <GoogleColorIcon />
+          )}
+          <span>{isLoading ? "Validando..." : "Continuar con Google"}</span>
+        </div>
 
-      {/* Botón custom alineado con la estética actual */}
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={disabled || isLoading || !ready}
-        className="flex w-full items-center justify-center gap-3 rounded border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-2.5 text-sm font-medium text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)] disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-[var(--color-foreground-muted)]" />
-        ) : (
-          <GoogleColorIcon />
-        )}
-        <span>{isLoading ? "Validando..." : "Continuar con Google"}</span>
-      </button>
+        <div
+          ref={googleButtonRef}
+          aria-label="Continuar con Google"
+          className={`absolute inset-0 overflow-hidden rounded ${disabled || isLoading || !ready ? "pointer-events-none opacity-0" : "opacity-[0.01]"}`}
+        />
+      </div>
 
       {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
     </div>

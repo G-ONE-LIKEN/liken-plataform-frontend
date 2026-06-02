@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSession } from "@/providers/session-provider"
 import { useProjects } from "@/features/projects/hooks/use-projects"
+import { AdminDashboard } from "@/features/admin/components/admin-dashboard"
 import type { EnergyType } from "@/features/projects/types/projects"
 
 const energyIcons: Record<EnergyType, React.ElementType> = {
@@ -34,6 +35,17 @@ const stateLabels: Record<string, { label: string; className: string }> = {
 }
 
 export default function DashboardPage() {
+  const { user, permissions } = useSession()
+
+  // El admin tiene una vista completamente distinta enfocada en gestión de la plataforma
+  if (permissions.isAdmin) {
+    return <AdminDashboard />
+  }
+
+  return <InvestorDashboard />
+}
+
+function InvestorDashboard() {
   const { user } = useSession()
   const projectsQuery = useProjects()
   const projects = projectsQuery.data?.content ?? []

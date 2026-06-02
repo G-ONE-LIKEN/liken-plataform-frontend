@@ -21,6 +21,8 @@ import {
   Users,
   ShieldCheck,
   Building2,
+  TrendingUp,
+  Megaphone,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,14 +36,23 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ProtectedRoute } from "@/features/auth/components/protected-route"
 import { useSession } from "@/providers/session-provider"
+import { NotificationsDropdown } from "@/features/notifications/components/notifications-dropdown"
 import type { PermissionContext } from "@/features/auth/types/auth"
 
-const navigation = [
+const navigation: {
+  name: string
+  href: string
+  icon: React.ElementType
+  allow?: (p: PermissionContext) => boolean
+}[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Inversiones", href: "/dashboard/investments", icon: Briefcase },
-  { name: "Proyectos", href: "/dashboard/projects", icon: FolderKanban },
-  { name: "Marketplace", href: "/dashboard/marketplace", icon: Store },
-  { name: "Wallet", href: "/dashboard/wallet", icon: Wallet },
+  // Las siguientes son funciones de "usuario inversor / developer", no de admin.
+  // Un admin puro no las necesita en su sidebar.
+  { name: "Inversiones", href: "/dashboard/investments", icon: Briefcase, allow: (p) => !p.isAdmin },
+  { name: "Proyectos", href: "/dashboard/projects", icon: FolderKanban, allow: (p) => !p.isAdmin },
+  { name: "Mis proyectos", href: "/dashboard/projects/mine", icon: FolderKanban, allow: (p) => !p.isAdmin && p.canManageProjects },
+  { name: "Marketplace", href: "/dashboard/marketplace", icon: Store, allow: (p) => !p.isAdmin },
+  { name: "Wallet", href: "/dashboard/wallet", icon: Wallet, allow: (p) => !p.isAdmin },
 ]
 
 const secondaryNavigation = [
@@ -59,6 +70,9 @@ const adminNavigation: {
   { name: "Usuarios", href: "/dashboard/users", icon: Users, allow: (p) => p.canReadUsers },
   { name: "Roles y Permisos", href: "/dashboard/admin/roles", icon: ShieldCheck, allow: (p) => p.canManageRoles },
   { name: "Desarrolladores", href: "/dashboard/admin/developers", icon: Building2, allow: (p) => p.isAdmin },
+  { name: "Proyectos pendientes", href: "/dashboard/admin/projects", icon: FolderKanban, allow: (p) => p.isAdmin },
+  { name: "Informe financiero",   href: "/dashboard/admin/reports",  icon: TrendingUp,   allow: (p) => p.isAdmin },
+  { name: "Notificaciones",        href: "/dashboard/admin/broadcast", icon: Megaphone,   allow: (p) => p.isAdmin },
 ]
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -101,33 +115,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
           <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Principal
           </p>
-          {navigation.map((item) => {
-            const isActive = pathname === item.href
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`
-                  flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors
-                  ${isActive
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent"
-                  }
-                `}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.name}
-              </Link>
-            )
-          })}
-
-          <div className="my-4 border-t border-sidebar-border" />
-
-          <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Configuración
-          </p>
-          {secondaryNavigation.map((item) => {
+          {navigation.filter((item) => !item.allow || item.allow(permissions)).map((item) => {
             const isActive = pathname === item.href
             return (
               <Link
@@ -180,6 +168,32 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
               </>
             )
           })()}
+
+          <div className="my-4 border-t border-sidebar-border" />
+
+          <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Configuración
+          </p>
+          {secondaryNavigation.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`
+                  flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors
+                  ${isActive
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent"
+                  }
+                `}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.name}
+              </Link>
+            )
+          })}
         </nav>
 
         {/* User section */}
@@ -225,10 +239,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="ml-auto flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" />
-            </Button>
+            <NotificationsDropdown />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateProject, type CreateProjectRequest } from "@/features/projects/hooks/use-project-mutations";
+import { toast } from "@/hooks/use-toast";
 
 const ENERGY_TYPES = [
   { value: "SOLAR", label: "Solar" },
@@ -64,6 +65,10 @@ export function CreateProjectDialog() {
     }
     try {
       await create.mutateAsync(form);
+      toast({
+        title: "Proyecto enviado",
+        description: "Quedó a la espera de aprobación de un administrador.",
+      });
       setOpen(false);
       setForm(EMPTY);
     } catch (err) {
@@ -79,34 +84,37 @@ export function CreateProjectDialog() {
           Crear proyecto
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto border-border bg-card sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Nuevo Proyecto</DialogTitle>
-          <DialogDescription>
-            Completá los datos del proyecto. Los campos marcados con * son obligatorios.
+          <DialogTitle className="text-foreground">Nuevo Proyecto</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Completá los datos del proyecto. Los campos marcados con <span className="text-primary">*</span> son obligatorios.
           </DialogDescription>
         </DialogHeader>
 
-        <form id="create-project-form" onSubmit={handleSubmit} className="space-y-5 py-2">
-          {/* Nombre y descripción */}
+        <form
+          id="create-project-form"
+          onSubmit={handleSubmit}
+          className="space-y-5 py-2 [&_input]:border-border [&_textarea]:border-border [&_[data-slot=select-trigger]]:border-border"
+        >
           <div className="space-y-2">
             <Label htmlFor="name">Nombre *</Label>
             <Input id="name" placeholder="Ej: Solar Valley Norte" value={form.name} onChange={(e) => set("name", e.target.value)} required />
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="description">Descripción *</Label>
             <Textarea id="description" placeholder="Descripción del proyecto y sus objetivos..." value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} required />
           </div>
 
-          {/* Tipo de energía + ubicación */}
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label>Tipo de energía *</Label>
               <Select value={form.energyType} onValueChange={(v) => set("energyType", v)}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="[&_[data-slot=select-item]]:focus:bg-primary/15 [&_[data-slot=select-item]]:focus:text-foreground [&_[data-slot=select-item]]:data-[state=checked]:text-primary">
                   {ENERGY_TYPES.map((t) => (
                     <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                   ))}
@@ -123,7 +131,6 @@ export function CreateProjectDialog() {
             </div>
           </div>
 
-          {/* Tokenomics */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="totalTokens">Total de tokens *</Label>
@@ -143,7 +150,6 @@ export function CreateProjectDialog() {
             </div>
           </div>
 
-          {/* Fechas */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="startDate">Fecha de inicio</Label>
@@ -155,7 +161,6 @@ export function CreateProjectDialog() {
             </div>
           </div>
 
-          {/* Técnico (opcional) */}
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="installedCapacityMW">Capacidad (MW)</Label>
@@ -178,7 +183,7 @@ export function CreateProjectDialog() {
           )}
         </form>
 
-        <DialogFooter>
+        <DialogFooter className="border-t border-border pt-4">
           <Button variant="outline" onClick={() => setOpen(false)} type="button">
             Cancelar
           </Button>
@@ -191,3 +196,4 @@ export function CreateProjectDialog() {
     </Dialog>
   );
 }
+

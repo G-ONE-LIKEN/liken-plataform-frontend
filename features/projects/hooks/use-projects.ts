@@ -14,6 +14,26 @@ export function useProjects() {
   });
 }
 
+export function useMyProjects() {
+  return useQuery({
+    queryKey: ["projects", "mine"],
+    queryFn: async () => {
+      const response = await apiClient.get<ProjectsPage>("/api/projects/mine");
+      return response.data;
+    },
+  });
+}
+
+export function usePendingApprovalProjects() {
+  return useQuery({
+    queryKey: ["projects", "pending-approval"],
+    queryFn: async () => {
+      const response = await apiClient.get<ProjectsPage>("/api/projects/pending-approval");
+      return response.data;
+    },
+  });
+}
+
 export function useProjectDetail(id: number) {
   return useQuery({
     queryKey: ["projects", id],
