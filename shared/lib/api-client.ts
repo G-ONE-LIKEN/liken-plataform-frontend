@@ -3,9 +3,21 @@
 import { env } from "@/shared/config/env";
 import type { ApiResponse } from "@/shared/types/api";
 
-export class UnauthorizedError extends Error {
-  constructor(message = "No autorizado") {
+export class ApiClientError extends Error {
+  code?: string | null;
+  status: number;
+
+  constructor(message: string, status = 500, code?: string | null) {
     super(message);
+    this.name = "ApiClientError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+export class UnauthorizedError extends ApiClientError {
+  constructor(message = "No autorizado", code?: string | null) {
+    super(message, 401, code);
     this.name = "UnauthorizedError";
   }
 }
@@ -107,22 +119,26 @@ async function request<T>(
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("auth:unauthorized"));
     }
-    throw new UnauthorizedError("No autorizado");
+    throw new UnauthorizedError(payload?.message ?? "No autorizado", payload?.code);
   }
 
   if (response.status === 401 && isRetry && hasSessionToken) {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("auth:unauthorized"));
     }
-    throw new UnauthorizedError("No autorizado");
+    throw new UnauthorizedError(payload?.message ?? "No autorizado", payload?.code);
   }
 
   if (!response.ok) {
-    throw new Error(payload?.message ?? "Ocurrió un error inesperado");
+    throw new ApiClientError(
+      payload?.message ?? "Ocurrio un error inesperado",
+      response.status,
+      payload?.code,
+    );
   }
 
   if (!payload) {
-    throw new Error("La respuesta del backend no tiene el formato esperado");
+    throw new ApiClientError("La respuesta del backend no tiene el formato esperado");
   }
 
   return payload;

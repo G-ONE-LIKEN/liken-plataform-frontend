@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   Zap,
   LayoutDashboard,
@@ -70,17 +70,73 @@ const adminNavigation: {
   { name: "Usuarios", href: "/dashboard/users", icon: Users, allow: (p) => p.canReadUsers },
   { name: "Roles y Permisos", href: "/dashboard/admin/roles", icon: ShieldCheck, allow: (p) => p.canManageRoles },
   { name: "Desarrolladores", href: "/dashboard/admin/developers", icon: Building2, allow: (p) => p.isAdmin },
-  { name: "Proyectos pendientes", href: "/dashboard/admin/projects", icon: FolderKanban, allow: (p) => p.isAdmin },
+  { name: "Proyectos", href: "/dashboard/admin/projects", icon: FolderKanban, allow: (p) => p.isAdmin },
   { name: "Informe financiero",   href: "/dashboard/admin/reports",  icon: TrendingUp,   allow: (p) => p.isAdmin },
   { name: "Notificaciones",        href: "/dashboard/admin/broadcast", icon: Megaphone,   allow: (p) => p.isAdmin },
 ]
 
+/**
+ * Rutas que el admin NO debe poder visitar — incluso tipeando la URL.
+ * Son las páginas pensadas para usuarios inversores/developers.
+ * Si el admin entra acá lo redirigimos a /dashboard.
+ *
+ * El matching es por prefijo: "/dashboard/wallet" bloquea también "/dashboard/wallet/x/y".
+ */
+const ADMIN_BLOCKED_PREFIXES = [
+  "/dashboard/investments",
+  "/dashboard/projects",     // catálogo + /mine
+  "/dashboard/marketplace",
+  "/dashboard/wallet",
+]
+
+/**
+ * Rutas que los NO-admin no deben poder visitar — incluso tipeando la URL.
+ * Son las páginas administrativas. Si un inversor/developer entra acá, lo
+ * redirigimos a /dashboard.
+ */
+const NON_ADMIN_BLOCKED_PREFIXES = [
+  "/dashboard/users",
+  "/dashboard/admin",
+]
+
+function matchesAnyPrefix(pathname: string, prefixes: string[]): boolean {
+  return prefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  )
+}
+
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user, permissions, logout } = useSession()
 
   const displayName = user?.email?.split("@")[0] ?? "Usuario"
+
+  // Bloqueo de rutas por rol:
+  //   - admin entrando a rutas de inversor (wallet, investments, etc) → /dashboard
+  //   - no-admin entrando a rutas de admin (users, /admin/*) → /dashboard
+  // Cualquiera de los dos casos: redirigimos al panel principal.
+  const shouldRedirect =
+    (permissions.isAdmin && matchesAnyPrefix(pathname, ADMIN_BLOCKED_PREFIXES)) ||
+    (!permissions.isAdmin && matchesAnyPrefix(pathname, NON_ADMIN_BLOCKED_PREFIXES))
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      router.replace("/dashboard")
+    }
+  }, [shouldRedirect, router])
+
+  // Mientras redirige, no renderizamos contenido para evitar parpadeo
+  if (shouldRedirect) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="rounded-full border border-border bg-card px-5 py-3 text-sm text-muted-foreground">
+          Redirigiendo...
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen bg-background">

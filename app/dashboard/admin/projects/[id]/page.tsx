@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, MapPin, Zap, TrendingUp, Coins, Calendar, Target, Wallet,
   Sun, Wind, Droplets, Leaf, User, FileText, Building2, Hash, Globe,
-  CheckCircle2, XCircle, Loader2, AlertTriangle, Info,
+  CheckCircle2, XCircle, Loader2, AlertTriangle, Info, Activity, Archive,
 } from "lucide-react";
 import { AccessGate } from "@/features/auth/components/access-gate";
 import { useProjectDetail } from "@/features/projects/hooks/use-projects";
@@ -73,6 +73,27 @@ function ReviewContent() {
 
   const EnergyIcon = ENERGY_ICONS[data.energyType] ?? Zap;
   const isPending = data.state === "PENDING_APPROVAL";
+  const isActive = data.state === "DRAFT" || data.state === "PRE_OPEN" || data.state === "OPEN";
+  const isFinished = data.state === "CLOSED" || data.state === "CANCELLED";
+
+  // Métricas de captación (solo aplica si el proyecto ya está en algún estado post-pending)
+  const raised  = data.raisedAmount ? Number(data.raisedAmount)  : 0;
+  const hardCap = data.hardCap      ? Number(data.hardCap)       : 0;
+  const softCap = data.softCap      ? Number(data.softCap)       : 0;
+  const tokenPrice = data.tokenPrice ? Number(data.tokenPrice)  : 0;
+  const totalTokens = data.totalTokens ? Number(data.totalTokens) : 0;
+  const hardCapPct = hardCap > 0 ? Math.min(100, (raised / hardCap) * 100) : 0;
+  const softCapPct = softCap > 0 ? Math.min(100, (raised / softCap) * 100) : 0;
+  const tokensSold = tokenPrice > 0 ? raised / tokenPrice : 0;
+  const tokensSoldPct = totalTokens > 0 ? Math.min(100, (tokensSold / totalTokens) * 100) : 0;
+  const softCapReached = softCap > 0 && raised >= softCap;
+  const hardCapReached = hardCap > 0 && raised >= hardCap;
+
+  const eyebrowText = isPending
+    ? `Revisión de propuesta · ${ENERGY_LABELS[data.energyType]}`
+    : isActive
+    ? `Proyecto activo · ${ENERGY_LABELS[data.energyType]}`
+    : `Proyecto finalizado · ${ENERGY_LABELS[data.energyType]}`;
 
   async function handleApprove() {
     setPending("APPROVE");
@@ -117,7 +138,7 @@ function ReviewContent() {
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Volver a pendientes
+          Volver a proyectos
         </Link>
         <StateBadge state={data.state} />
       </div>
@@ -130,7 +151,7 @@ function ReviewContent() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium uppercase tracking-wider text-primary">
-              Revisión de propuesta · {ENERGY_LABELS[data.energyType]}
+              {eyebrowText}
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               {data.name}
@@ -144,7 +165,7 @@ function ReviewContent() {
         </div>
 
         {/* Banner contextual según estado */}
-        {isPending ? (
+        {isPending && (
           <div className="mt-5 flex items-start gap-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
             <div>
@@ -154,16 +175,86 @@ function ReviewContent() {
               </p>
             </div>
           </div>
-        ) : (
-          <div className="mt-5 flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-3 text-sm">
-            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        )}
+        {isActive && (
+          <div className="mt-5 flex items-start gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm">
+            <Activity className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
             <div>
-              <p className="font-medium text-foreground">Este proyecto ya no está pendiente</p>
-              <p className="text-xs text-muted-foreground">Estado actual: {data.state}. Las acciones de revisión están deshabilitadas.</p>
+              <p className="font-medium text-foreground">Vista de monitoreo</p>
+              <p className="text-xs text-muted-foreground">
+                Estás viendo el detalle como administrador. Podés monitorear la captación y las métricas, pero no operar como inversor.
+              </p>
+            </div>
+          </div>
+        )}
+        {isFinished && (
+          <div className="mt-5 flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-3 text-sm">
+            <Archive className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <div>
+              <p className="font-medium text-foreground">Proyecto {data.state === "CANCELLED" ? "cancelado" : "cerrado"}</p>
+              <p className="text-xs text-muted-foreground">
+                {data.state === "CANCELLED"
+                  ? "El proyecto fue cancelado o rechazado. No hay operaciones activas."
+                  : "El ciclo de captación finalizó. Vista de solo lectura."}
+              </p>
             </div>
           </div>
         )}
       </header>
+
+      {/* Métricas de captación — solo para proyectos activos o cerrados */}
+      {(isActive || isFinished) && (hardCap > 0 || softCap > 0 || raised > 0) && (
+        <Section title="Captación" icon={Target}>
+          <div className="space-y-6">
+            {hardCap > 0 && (
+              <div>
+                <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="text-sm text-muted-foreground">Recaudado</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {formatCurrency(String(raised))}
+                    <span className="ml-2 text-sm font-medium text-muted-foreground">
+                      de {formatCurrency(String(hardCap))}
+                    </span>
+                  </p>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${hardCapPct}%` }}
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  {hardCapPct.toFixed(2)}% del hard cap{hardCapReached && " · ✓ Hard cap alcanzado"}
+                </p>
+              </div>
+            )}
+
+            {softCap > 0 && !hardCapReached && (
+              <div className="rounded-lg bg-secondary/40 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm text-muted-foreground">Soft cap (mínimo viable)</span>
+                  <span className={`text-sm font-semibold ${softCapReached ? "text-green-500" : "text-foreground"}`}>
+                    {softCapReached ? "✓ Alcanzado" : `${softCapPct.toFixed(1)}%`}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {formatCurrency(String(softCap))}
+                  {data.softCapDeadline && ` · vencimiento ${formatDate(data.softCapDeadline)}`}
+                </p>
+              </div>
+            )}
+
+            <Grid>
+              <Field label="Tokens emitidos" value={data.totalTokens || "—"} highlight />
+              <Field label="Tokens vendidos (est.)" value={tokensSold > 0 ? `${tokensSold.toFixed(2)} (${tokensSoldPct.toFixed(1)}%)` : "—"} />
+              <Field label="Precio por token" value={data.tokenPrice ? formatCurrency(data.tokenPrice) : "—"} />
+              <Field label="APY estimado" value={data.expectedAnnualYield ? formatPercent(data.expectedAnnualYield) : "—"} highlight />
+              <Field label="Inversión mínima" value={data.minimumInvestment ? formatCurrency(data.minimumInvestment) : "—"} />
+              <Field label="Producción anual" value={data.expectedAnnualProductionMWh ? `${data.expectedAnnualProductionMWh} MWh` : "—"} />
+            </Grid>
+          </div>
+        </Section>
+      )}
 
       {/* Descripción */}
       <Section title="Descripción de la propuesta" icon={FileText}>

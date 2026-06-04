@@ -24,6 +24,23 @@ export function useMyProjects() {
   });
 }
 
+/**
+ * Lista paginada por estado. Útil para admin: pasando state=PENDING_APPROVAL
+ * trae los pending, pasando OPEN trae los abiertos, etc.
+ */
+export function useProjectsByState(state?: string, pageSize = 50) {
+  return useQuery({
+    queryKey: ["projects", "by-state", state ?? "all"],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (state) params.set("state", state);
+      params.set("size", String(pageSize));
+      const response = await apiClient.get<ProjectsPage>(`/api/projects?${params.toString()}`);
+      return response.data;
+    },
+  });
+}
+
 export function usePendingApprovalProjects() {
   return useQuery({
     queryKey: ["projects", "pending-approval"],

@@ -127,6 +127,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         role: ctx.role ?? "BASIC",
         permissions: Array.isArray(ctx.permissions) ? ctx.permissions : [],
         profileCompleted: Boolean(ctx.profileCompleted),
+        emailVerified: typeof ctx.emailVerified === "boolean" ? ctx.emailVerified : prev?.emailVerified,
       }));
     } catch {
       // silently fail — fall back to JWT data
@@ -195,6 +196,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       role: freshUser?.role ?? jwtUser.role,
       permissions: freshUser?.permissions ?? jwtUser.permissions,
       profileCompleted: freshUser?.profileCompleted ?? jwtUser.profileCompleted,
+      emailVerified: freshUser?.emailVerified ?? jwtUser.emailVerified,
     };
   }, [jwtUser, freshUser]);
 

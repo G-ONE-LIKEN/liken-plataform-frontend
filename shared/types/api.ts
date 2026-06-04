@@ -1,6 +1,7 @@
 export type ApiResponse<T> = {
   message: string;
   data: T;
+  code?: string | null;
   status: number;
   timestamp: string;
 };

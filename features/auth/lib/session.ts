@@ -10,6 +10,7 @@ type DecodedToken = {
   role?: string;
   permissions?: string[] | string;
   profileCompleted?: boolean;
+  emailVerified?: boolean;
   exp?: number;
 };
 
@@ -39,6 +40,7 @@ export function parseSessionToken(token: string): SessionUser {
     role: decoded.role ?? "USER",
     permissions,
     profileCompleted: decoded.profileCompleted ?? false,
+    emailVerified: decoded.emailVerified,
     exp: decoded.exp,
   };
 }

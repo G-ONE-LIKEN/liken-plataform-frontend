@@ -10,6 +10,10 @@ import { Card } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
 import { useSession } from "@/providers/session-provider";
 
+const dniRuleMessage = "Ingresa un DNI valido.";
+const dniRuleHint = "Usa solo numeros o formatos comunes como 12.345.678.";
+const dniRuleRegex = /^[0-9.\s-]{7,14}$/;
+
 type ProfileForm = {
   firstName: string;
   lastName: string;
@@ -60,11 +64,35 @@ export function CompleteProfileForm() {
     termsAccepted: false,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof ProfileForm, string>>>({});
+  const [touchedDni, setTouchedDni] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  function validateDni(value: string) {
+    return dniRuleRegex.test(value) ? undefined : dniRuleMessage;
+  }
+
   function updateField<K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) {
-    setForm((current) => ({ ...current, [key]: value }));
+    setForm((current) => {
+      const next = { ...current, [key]: value };
+
+      if (key === "dni" && touchedDni) {
+        setErrors((currentErrors) => ({
+          ...currentErrors,
+          dni: validateDni(next.dni),
+        }));
+      }
+
+      return next;
+    });
+  }
+
+  function handleDniBlur() {
+    setTouchedDni(true);
+    setErrors((current) => ({
+      ...current,
+      dni: validateDni(form.dni),
+    }));
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -72,6 +100,7 @@ export function CompleteProfileForm() {
     setServerError(null);
     const parsed = profileSchema.safeParse(form);
     if (!parsed.success) {
+      setTouchedDni(true);
       const fieldErrors = parsed.error.flatten().fieldErrors;
       setErrors({
         firstName: fieldErrors.firstName?.[0],
@@ -92,6 +121,7 @@ export function CompleteProfileForm() {
     try {
       await apiClient.put("/api/users/me/profile", form);
       await refreshContext();
+      setTouchedDni(false);
       router.replace(searchParams.get("next") ?? "/dashboard");
     } catch (error) {
       setServerError(error instanceof Error ? error.message : "No se pudo actualizar el perfil.");
@@ -112,7 +142,15 @@ export function CompleteProfileForm() {
           <div className="grid gap-3 sm:grid-cols-2">
             <Input label="Nombre" value={form.firstName} error={errors.firstName} onChange={(event) => updateField("firstName", event.target.value)} />
             <Input label="Apellido" value={form.lastName} error={errors.lastName} onChange={(event) => updateField("lastName", event.target.value)} />
-            <Input label="DNI" inputMode="numeric" value={form.dni} error={errors.dni} onChange={(event) => updateField("dni", event.target.value)} />
+            <Input
+              label="DNI"
+              inputMode="numeric"
+              value={form.dni}
+              hint={dniRuleHint}
+              error={errors.dni}
+              onBlur={handleDniBlur}
+              onChange={(event) => updateField("dni", event.target.value)}
+            />
             <Input label="Fecha de nacimiento" type="date" value={form.birthDate} error={errors.birthDate} onChange={(event) => updateField("birthDate", event.target.value)} />
             <Input label="Telefono" value={form.phone} error={errors.phone} onChange={(event) => updateField("phone", event.target.value)} />
           </div>

@@ -28,6 +28,7 @@ export type SessionUser = {
   role: string;
   permissions: string[];
   profileCompleted: boolean;
+  emailVerified?: boolean;
   exp?: number;
 };
 

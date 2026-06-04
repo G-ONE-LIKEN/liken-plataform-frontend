@@ -303,7 +303,7 @@ function RevenueChart({ data }: { data: MonthlyPoint[] }) {
               borderRadius: "0.5rem",
               fontSize: "0.75rem",
             }}
-            formatter={(v: number) => formatCurrency(v)}
+            formatter={(value) => formatCurrency(Number(value ?? 0))}
           />
           <Area
             type="monotone"
@@ -335,7 +335,7 @@ function FeesBreakdownChart({ data }: { data: MonthlyPoint[] }) {
               borderRadius: "0.5rem",
               fontSize: "0.75rem",
             }}
-            formatter={(v: number) => formatCurrency(v)}
+            formatter={(value) => formatCurrency(Number(value ?? 0))}
           />
           <Legend wrapperStyle={{ fontSize: "0.75rem" }} />
           <Bar
