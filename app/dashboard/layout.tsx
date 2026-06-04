@@ -154,10 +154,14 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-6">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div className="relative flex h-7 w-7 items-center justify-center rounded border border-sidebar-primary/50 bg-sidebar-primary/10">
-              <Zap className="h-3.5 w-3.5 text-sidebar-primary" />
+        <div className="relative flex h-16 items-center justify-between border-b border-sidebar-border px-6">
+          <div
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+          />
+          <Link href="/dashboard" className="group flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_0_22px_-4px_oklch(0.72_0.16_165/0.8)] transition-shadow group-hover:shadow-[0_0_28px_-2px_oklch(0.72_0.16_165/0.95)]">
+              <Zap className="h-4 w-4" />
             </div>
             <span className="text-sm font-bold tracking-[0.14em] uppercase text-sidebar-foreground">LIKEN</span>
           </Link>
@@ -180,7 +184,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                 className={`
                   flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors
                   ${isActive
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_0_20px_-6px_oklch(0.72_0.16_165/0.9)]"
                     : "text-sidebar-foreground hover:bg-sidebar-accent"
                   }
                 `}
@@ -239,7 +243,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                 className={`
                   flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors
                   ${isActive
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_0_20px_-6px_oklch(0.72_0.16_165/0.9)]"
                     : "text-sidebar-foreground hover:bg-sidebar-accent"
                   }
                 `}
@@ -255,7 +259,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         {/* User section */}
         <div className="border-t border-sidebar-border p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sidebar-accent">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sidebar-accent ring-1 ring-primary/20">
               <User className="h-5 w-5 text-sidebar-accent-foreground" />
             </div>
             <div className="flex-1 min-w-0">
@@ -263,7 +267,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-1.5">
                 <p className="text-xs text-muted-foreground">{user?.role ?? "USER"}</p>
                 {permissions.isAdmin && (
-                  <span className="rounded bg-primary/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                  <span className="rounded-full border border-primary/30 bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
                     Admin
                   </span>
                 )}
@@ -300,7 +304,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="hidden items-center gap-2 rounded-lg px-3 py-2 hover:bg-secondary lg:flex">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-[0_0_18px_-5px_oklch(0.72_0.16_165/0.8)]">
                     <User className="h-4 w-4 text-primary-foreground" />
                   </div>
                   <span className="text-sm font-medium text-foreground">{displayName}</span>

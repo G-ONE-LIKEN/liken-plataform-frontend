@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, formatDate, formatPercent } from "@/shared/lib/utils";
 
+const GRADIENT_TEXT = "bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent";
+
 const ENERGY_ICONS = { SOLAR: Sun, WIND: Wind, HYDRO: Droplets, BIOMASS: Leaf };
 const ENERGY_LABELS = {
   SOLAR: "Solar fotovoltaico",
@@ -100,10 +102,15 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* ─── Hero ──────────────────────────────────── */}
-      <header className="rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-6 sm:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/20 ring-1 ring-primary/30 sm:h-16 sm:w-16">
-            <EnergyIcon className="h-7 w-7 text-primary sm:h-8 sm:w-8" />
+      <header className="relative isolate overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-6 sm:p-8">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-16 -top-16 -z-10 h-52 w-52 rounded-full opacity-40 blur-3xl"
+          style={{ background: "radial-gradient(circle, oklch(0.72 0.16 165 / 0.35), transparent 70%)" }}
+        />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_0_28px_-4px_oklch(0.72_0.16_165/0.75)] sm:h-16 sm:w-16">
+            <EnergyIcon className="h-7 w-7 sm:h-8 sm:w-8" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium uppercase tracking-wider text-primary">
@@ -163,7 +170,7 @@ export default function ProjectDetailPage() {
               {calcs!.hardCap > 0 && (
                 <div className="space-y-1.5">
                   <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                    <div className="h-full rounded-full bg-primary transition-all"
+                    <div className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all"
                       style={{ width: `${calcs!.hardCapPct}%` }} />
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -199,6 +206,7 @@ export default function ProjectDetailPage() {
 
       {/* ─── Simulador ─────────────────────────────── */}
       <section className="mt-6 overflow-hidden rounded-2xl border border-primary/30 bg-card">
+        <div aria-hidden className="h-1 w-full bg-gradient-to-r from-primary via-accent to-primary" />
         <header className="border-b border-border bg-gradient-to-br from-primary/10 to-transparent px-6 py-5">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
@@ -362,7 +370,7 @@ function KpiCard({
         <Icon className={`h-3.5 w-3.5 ${accent ? "text-primary" : "text-muted-foreground"}`} />
         <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
       </div>
-      <p className={`mt-2 truncate text-xl font-bold sm:text-2xl ${accent ? "text-primary" : "text-foreground"}`}>{value}</p>
+      <p className={`mt-2 truncate text-xl font-bold sm:text-2xl ${accent ? GRADIENT_TEXT : "text-foreground"}`}>{value}</p>
     </div>
   );
 }
@@ -406,7 +414,7 @@ function ResultCard({
         <Icon className={`h-4 w-4 ${accent ? "text-primary" : "text-muted-foreground"}`} />
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
       </div>
-      <p className={`mt-3 truncate text-2xl font-bold ${accent ? "text-primary" : "text-foreground"}`}>
+      <p className={`mt-3 truncate text-2xl font-bold ${accent ? GRADIENT_TEXT : "text-foreground"}`}>
         {value}
       </p>
     </div>

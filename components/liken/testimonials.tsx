@@ -43,16 +43,17 @@ export function Testimonials() {
           transition={{ duration: 0.5 }}
           className="mb-14"
         >
-          <p className="text-xs font-semibold tracking-[0.1em] uppercase text-primary mb-3">
+          <p className="mb-3 inline-flex items-center gap-2 text-xs font-semibold tracking-[0.1em] uppercase text-primary">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_oklch(0.72_0.16_165)]" />
             Inversores
           </p>
-          <h2 className="text-3xl font-bold tracking-[-0.02em] text-foreground sm:text-4xl text-balance max-w-lg">
+          <h2 className="max-w-lg text-3xl font-bold tracking-[-0.02em] text-foreground text-balance sm:text-4xl">
             Lo que dicen quienes ya invierten
           </h2>
         </motion.div>
 
         {/* Cards */}
-        <div className="grid gap-px bg-border/60 border border-border/60 rounded-lg overflow-hidden md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3">
           {testimonials.map((t, index) => (
             <motion.div
               key={t.name}
@@ -60,9 +61,9 @@ export function Testimonials() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.45, delay: index * 0.1 }}
-              className="bg-card p-7 flex flex-col"
+              className="flex flex-col rounded-2xl border border-border/70 bg-card/70 p-7 backdrop-blur-sm transition-all duration-300 hover:border-primary/30 hover:bg-card"
             >
-              <Quote className="h-6 w-6 text-primary/25 mb-4 shrink-0" />
+              <Quote className="mb-4 h-6 w-6 shrink-0 text-primary/30" />
               <p className="text-sm text-muted-foreground leading-relaxed flex-1 mb-6">
                 {t.content}
               </p>

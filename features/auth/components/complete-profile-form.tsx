@@ -2,13 +2,13 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Building2, Loader2, UserRound } from "lucide-react";
 import { z } from "zod";
 import { apiClient } from "@/shared/lib/api-client";
 import { Button } from "@/shared/ui/button";
-import { Card } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
 import { useSession } from "@/providers/session-provider";
+import { AuthPanel } from "@/features/auth/components/auth-shell";
 
 const dniRuleMessage = "Ingresa un DNI valido.";
 const dniRuleHint = "Usa solo numeros o formatos comunes como 12.345.678.";
@@ -131,15 +131,20 @@ export function CompleteProfileForm() {
   }
 
   return (
-    <Card
-      title="Completar perfil"
+    <AuthPanel
+      brandLabel="Completar perfil"
+      brandSubtitle="Un paso para habilitar tu cuenta"
+      heading="Contanos quien sos"
       description="Necesitamos estos datos para habilitar tu cuenta profesional en LIKEN."
-      className="w-full max-w-2xl"
+      className="max-w-2xl"
     >
-      <form className="grid gap-5" onSubmit={handleSubmit}>
-        <section className="grid gap-3">
-          <p className="text-sm font-semibold text-[var(--color-foreground)]">Identidad</p>
-          <div className="grid gap-3 sm:grid-cols-2">
+      <form className="grid gap-6" onSubmit={handleSubmit}>
+        <section className="grid gap-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-[var(--color-foreground)]">
+            <UserRound className="h-4 w-4 text-[var(--color-primary)]" />
+            Identidad
+          </p>
+          <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
             <Input label="Nombre" value={form.firstName} error={errors.firstName} onChange={(event) => updateField("firstName", event.target.value)} />
             <Input label="Apellido" value={form.lastName} error={errors.lastName} onChange={(event) => updateField("lastName", event.target.value)} />
             <Input
@@ -156,43 +161,46 @@ export function CompleteProfileForm() {
           </div>
         </section>
 
-        <section className="grid gap-3">
-          <p className="text-sm font-semibold text-[var(--color-foreground)]">Contacto</p>
-          <div className="grid gap-3 sm:grid-cols-2">
+        <section className="grid gap-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-[var(--color-foreground)]">
+            <Building2 className="h-4 w-4 text-[var(--color-primary)]" />
+            Contacto
+          </p>
+          <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
             <Input label="Pais" value={form.country} error={errors.country} onChange={(event) => updateField("country", event.target.value)} />
             <Input label="Provincia" value={form.province} error={errors.province} onChange={(event) => updateField("province", event.target.value)} />
             <Input label="Direccion" className="sm:col-span-2" value={form.address} error={errors.address} onChange={(event) => updateField("address", event.target.value)} />
           </div>
         </section>
 
-        <label className="flex items-start gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-sm text-[var(--color-foreground-muted)]">
+        <label className="flex items-start gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 text-sm text-[var(--color-foreground-muted)] transition-colors has-[:checked]:border-[var(--color-primary)] has-[:checked]:bg-[var(--color-primary-soft)]">
           <input
             type="checkbox"
-            className="mt-1 h-4 w-4 rounded border-[var(--color-border)]"
+            className="mt-0.5 h-4 w-4 accent-[var(--color-primary)]"
             checked={form.termsAccepted}
             onChange={(event) => updateField("termsAccepted", event.target.checked)}
           />
           <span>Acepto los terminos, condiciones y el tratamiento de datos necesario para operar en LIKEN.</span>
         </label>
-        {errors.termsAccepted && <p className="text-xs text-[var(--color-danger)]">{errors.termsAccepted}</p>}
+        {errors.termsAccepted && <p className="-mt-3 text-xs text-[var(--color-danger)]">{errors.termsAccepted}</p>}
 
         {serverError && (
-          <div className="rounded-lg border border-[rgba(214,69,93,0.3)] bg-[rgba(214,69,93,0.08)] px-4 py-3 text-sm text-[var(--color-danger)]">
+          <div className="rounded-xl border border-[rgba(214,69,93,0.3)] bg-[rgba(214,69,93,0.08)] px-4 py-3 text-sm text-[var(--color-danger)]">
             {serverError}
           </div>
         )}
 
-        <Button type="submit" className="h-11 w-full" disabled={isSubmitting}>
+        <Button type="submit" className="h-11 w-full gap-2" disabled={isSubmitting}>
           {isSubmitting ? (
-            <span className="inline-flex items-center gap-2">
+            <>
               <Loader2 className="h-4 w-4 animate-spin" />
               Guardando...
-            </span>
+            </>
           ) : (
             "Completar perfil"
           )}
         </Button>
       </form>
-    </Card>
+    </AuthPanel>
   );
 }

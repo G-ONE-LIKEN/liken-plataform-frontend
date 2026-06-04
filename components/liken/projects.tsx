@@ -4,6 +4,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Sun, Wind, CheckCircle2, MapPin, Zap, TrendingUp, Users, Clock, ArrowUpRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { gradientText } from "@/components/liken/atmosphere"
 
 const projects = [
   {
@@ -67,11 +68,11 @@ export function Projects() {
           className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
         >
           <div>
-            <div className="inline-flex items-center gap-2 border border-primary/30 bg-primary/8 px-3 py-1.5 rounded-sm text-xs font-medium text-primary tracking-wide mb-4">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/8 px-3 py-1.5 text-xs font-medium tracking-wide text-primary">
               <CheckCircle2 className="h-3.5 w-3.5" />
               Proyectos finalizados
             </div>
-            <h2 className="text-3xl font-bold tracking-[-0.02em] text-foreground sm:text-4xl text-balance max-w-lg">
+            <h2 className="max-w-lg text-3xl font-bold tracking-[-0.02em] text-foreground text-balance sm:text-4xl">
               Ya lo hicimos en Argentina
             </h2>
             <p className="mt-3 text-base text-muted-foreground max-w-xl">
@@ -87,7 +88,7 @@ export function Projects() {
         </motion.div>
 
         {/* Cards */}
-        <div className="grid gap-px bg-border/60 border border-border/60 rounded-lg overflow-hidden md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3">
           {projects.map((project, index) => (
             <motion.div
               key={project.id}
@@ -95,12 +96,12 @@ export function Projects() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.45, delay: index * 0.1 }}
-              className="group flex flex-col bg-card transition-colors hover:bg-card/80"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/70 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_24px_50px_-30px_oklch(0.72_0.16_165/0.7)]"
             >
               {/* Header */}
               <div className="flex items-start justify-between p-6 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/8">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/12">
                     <project.icon className="h-5 w-5 text-primary" />
                   </div>
                   <div>
@@ -113,19 +114,19 @@ export function Projects() {
                     </div>
                   </div>
                 </div>
-                <span className="shrink-0 border border-border/60 bg-muted/30 px-2 py-0.5 rounded-sm text-xs text-muted-foreground">
+                <span className="shrink-0 rounded-full border border-border/60 bg-muted/30 px-2.5 py-0.5 text-xs text-muted-foreground">
                   {project.type}
                 </span>
               </div>
 
               {/* APY + raised */}
-              <div className="mx-6 mb-4 rounded border border-border/80 bg-background/40 px-4 py-3">
+              <div className="mx-6 mb-4 rounded-xl border border-border/80 bg-background/40 px-4 py-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">APY entregado</p>
+                    <p className="mb-0.5 text-xs text-muted-foreground">APY entregado</p>
                     <div className="flex items-center gap-1.5">
                       <TrendingUp className="h-3.5 w-3.5 text-primary" />
-                      <span className="text-2xl font-bold tabular-nums tracking-tight text-primary">
+                      <span className={`text-2xl font-bold tabular-nums tracking-tight ${gradientText()}`}>
                         {project.apy}
                       </span>
                     </div>
@@ -145,9 +146,9 @@ export function Projects() {
                   <span className="text-muted-foreground">Financiado</span>
                   <span className="font-medium text-foreground tabular-nums">{project.funded}%</span>
                 </div>
-                <div className="h-1.5 bg-border/60 rounded-full overflow-hidden">
+                <div className="h-1.5 overflow-hidden rounded-full bg-border/60">
                   <div
-                    className="h-full bg-primary rounded-full"
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
                     style={{ width: `${project.funded}%` }}
                   />
                 </div>

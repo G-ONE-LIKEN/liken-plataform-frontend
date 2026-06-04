@@ -55,8 +55,11 @@ export function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Administración</p>
-        <h1 className="mt-1 text-3xl font-bold text-foreground">Hola, {displayName}</h1>
+        <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_oklch(0.72_0.16_165)]" />
+          Administración
+        </p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground">Hola, {displayName}</h1>
         <p className="mt-1 text-muted-foreground">
           {hasPendingWork
             ? "Tenés tareas de revisión pendientes. Empezá por las cards de abajo."
@@ -117,7 +120,7 @@ export function AdminDashboard() {
               href={`/dashboard/admin/projects/${p.id}`}
               className="group flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-3 transition-colors hover:border-primary/40"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/12 text-primary">
                 <Zap className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
@@ -149,7 +152,7 @@ export function AdminDashboard() {
               key={u.id}
               className="flex items-center gap-3 rounded-lg border border-border bg-secondary/30 p-3"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/12 text-primary">
                 <Building2 className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
@@ -201,7 +204,7 @@ export function AdminDashboard() {
                 href={`/projects/${p.id}`}
                 className="group flex items-center gap-3 rounded-lg border border-border bg-secondary/30 p-3 transition-colors hover:border-primary/40"
               >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/12 text-primary">
                   {(() => {
                     const Icon = ENERGY_ICONS[p.energyType] ?? Zap;
                     return <Icon className="h-4 w-4" />;
@@ -284,11 +287,11 @@ function KpiCard({
           {value == null ? (
             <Skeleton className="h-8 w-24" />
           ) : (
-            <p className="text-2xl font-bold text-foreground">{value}</p>
+            <p className={`text-2xl font-bold ${tone === "brand" ? "bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent" : "text-foreground"}`}>{value}</p>
           )}
           {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
         </div>
-        <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${tones[tone]}`}>
+        <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${tone === "brand" ? "border-primary/20 bg-primary text-primary-foreground shadow-[0_0_20px_-5px_oklch(0.72_0.16_165/0.8)]" : tones[tone]}`}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
@@ -358,7 +361,7 @@ function MiniStat({
 }) {
   return (
     <div className="flex items-center gap-3 rounded-lg border border-border bg-secondary/30 p-3">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-primary/20 bg-primary/12 text-primary">
         <Icon className="h-4 w-4" />
       </div>
       <div>
@@ -415,7 +418,7 @@ function ShortcutLink({
       href={href}
       className="group flex items-center gap-3 rounded-xl border border-border bg-secondary/30 px-4 py-3 transition-colors hover:border-primary/30 hover:bg-secondary"
     >
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-primary/20 bg-primary/12 text-primary">
         <Icon className="h-4 w-4" />
       </div>
       <span className="flex-1 text-sm font-medium text-foreground">{label}</span>

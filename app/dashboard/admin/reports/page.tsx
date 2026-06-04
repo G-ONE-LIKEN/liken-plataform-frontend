@@ -100,18 +100,24 @@ function ReportContent() {
       ) : (
         <>
           {/* KPI principal: ingresos totales */}
-          <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/15 via-card to-card p-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/15 via-card to-card p-6">
+            <div aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full opacity-40 blur-3xl"
+              style={{ background: "radial-gradient(circle, oklch(0.80 0.12 85 / 0.30), transparent 70%)" }}
+            />
+            <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-primary">Ingreso de la plataforma</p>
-                <p className="mt-1 text-4xl font-bold text-foreground sm:text-5xl">
+                <p className="mt-1 bg-gradient-to-r from-primary to-accent bg-clip-text text-4xl font-bold text-transparent sm:text-5xl">
                   {formatCurrency(data.totalRevenue)}
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Período: {data.from} → {data.to}
                 </p>
               </div>
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_0_28px_-5px_oklch(0.72_0.16_165/0.85)]">
                 <TrendingUp className="h-7 w-7" />
               </div>
             </div>

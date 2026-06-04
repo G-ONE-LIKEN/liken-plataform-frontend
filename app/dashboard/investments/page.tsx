@@ -9,7 +9,11 @@ export default function InvestmentsPage() {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Mis Inversiones</h1>
+          <p className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-primary">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_oklch(0.72_0.16_165)]" />
+            Portafolio
+          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Mis Inversiones</h1>
           <p className="mt-1 text-muted-foreground">Gestiona y monitorea tu portafolio de inversiones</p>
         </div>
         <Button variant="outline" className="gap-2">
@@ -26,10 +30,10 @@ export default function InvestmentsPage() {
           { label: "Rendimientos", value: "$0.00", green: true },
           { label: "APY Promedio", value: "—", primary: true },
         ].map((item) => (
-          <Card key={item.label} className="bg-card">
+          <Card key={item.label} className="bg-card transition-colors duration-300 hover:border-primary/40">
             <CardContent className="p-6">
               <p className="text-sm text-muted-foreground">{item.label}</p>
-              <p className={`mt-2 text-2xl font-bold ${item.green ? "text-green-500" : item.primary ? "text-primary" : "text-foreground"}`}>
+              <p className={`mt-2 text-2xl font-bold ${item.green ? "text-green-500" : item.primary ? "bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent" : "text-foreground"}`}>
                 {item.value}
               </p>
             </CardContent>
@@ -46,7 +50,7 @@ export default function InvestmentsPage() {
         <TabsContent value="portfolio" className="space-y-4">
           <Card className="bg-card">
             <CardContent className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/12 shadow-[0_0_30px_-8px_oklch(0.72_0.16_165/0.7)]">
                 <Leaf className="h-8 w-8 text-primary" />
               </div>
               <p className="text-base font-medium text-foreground">No tenés inversiones activas aún</p>

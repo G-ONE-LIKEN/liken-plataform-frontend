@@ -1,6 +1,6 @@
 import Link from "next/link"
-import { Zap } from "lucide-react"
 import { FaXTwitter, FaLinkedinIn, FaGithub, FaTelegram } from "react-icons/fa6"
+import { BrandMark } from "@/components/liken/atmosphere"
 
 const footerLinks = {
   platform: [
@@ -37,17 +37,16 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer id="nosotros" className="border-t border-border/50 bg-card/30">
+    <footer id="nosotros" className="relative border-t border-border/50 bg-card/30">
+      <div
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"
+      />
       <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-6">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                <Zap className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-foreground">LIKEN</span>
-            </div>
+            <BrandMark size="lg" />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
               Democratizando las inversiones en energía renovable a través de tecnología blockchain.
             </p>

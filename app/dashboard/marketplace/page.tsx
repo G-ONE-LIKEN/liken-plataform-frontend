@@ -36,7 +36,11 @@ export default function MarketplacePage() {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Marketplace</h1>
+          <p className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-primary">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_oklch(0.72_0.16_165)]" />
+            Trading P2P
+          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Marketplace</h1>
           <p className="mt-1 text-muted-foreground">Compra y vende tokens de energía renovable</p>
         </div>
         <div className="relative">
@@ -105,7 +109,7 @@ export default function MarketplacePage() {
               ))}
             </div>
             <div className="border-y border-border py-3 text-center">
-              <p className="text-lg font-bold text-foreground">$0.85</p>
+              <p className="bg-gradient-to-r from-primary to-accent bg-clip-text text-lg font-bold text-transparent">$0.85</p>
               <p className="text-xs text-muted-foreground">Precio actual</p>
             </div>
             <div>

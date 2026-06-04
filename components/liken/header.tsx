@@ -4,8 +4,9 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Zap } from "lucide-react"
+import { Menu } from "lucide-react"
 import { useSession } from "@/providers/session-provider"
+import { BrandMark } from "@/components/liken/atmosphere"
 
 const navigation = [
   { name: "Proyectos", href: "#proyectos" },
@@ -19,18 +20,16 @@ export function Header() {
   const { user } = useSession()
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/85 backdrop-blur-lg">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+      {/* Hairline degradada superior — firma de marca */}
+      <div
+        aria-hidden
+        className="h-px w-full bg-gradient-to-r from-transparent via-primary/60 to-transparent"
+      />
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5 lg:px-8">
 
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="relative flex h-7 w-7 items-center justify-center rounded border border-primary/50 bg-primary/10 transition-colors group-hover:bg-primary/20">
-            <Zap className="h-3.5 w-3.5 text-primary" />
-          </div>
-          <span className="text-sm font-bold tracking-[0.14em] text-foreground uppercase">
-            LIKEN
-          </span>
-        </Link>
+        <BrandMark size="sm" />
 
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-7 lg:flex">

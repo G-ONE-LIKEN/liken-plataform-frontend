@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { TrendingUp, Repeat2, BarChart3, Wifi } from "lucide-react"
+import { GradientBar, gradientText } from "@/components/liken/atmosphere"
 
 const benefits = [
   {
@@ -50,10 +51,11 @@ export function Tokenomics() {
           transition={{ duration: 0.5 }}
           className="mb-14"
         >
-          <p className="text-xs font-semibold tracking-[0.1em] uppercase text-primary mb-3">
+          <p className="mb-3 inline-flex items-center gap-2 text-xs font-semibold tracking-[0.1em] uppercase text-primary">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_oklch(0.72_0.16_165)]" />
             Tokenomics $LKN
           </p>
-          <h2 className="text-3xl font-bold tracking-[-0.02em] text-foreground sm:text-4xl text-balance max-w-lg">
+          <h2 className="max-w-lg text-3xl font-bold tracking-[-0.02em] text-foreground text-balance sm:text-4xl">
             ¿Qué gana el inversor?
           </h2>
           <p className="mt-3 text-base text-muted-foreground max-w-xl">
@@ -64,7 +66,7 @@ export function Tokenomics() {
         <div className="grid items-start gap-8 lg:grid-cols-[1fr_340px]">
 
           {/* Left — benefit tiles */}
-          <div className="grid gap-px bg-border/60 border border-border/60 rounded-lg overflow-hidden sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             {benefits.map((item, index) => (
               <motion.div
                 key={item.title}
@@ -72,13 +74,13 @@ export function Tokenomics() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: index * 0.08 }}
-                className="group bg-card p-6 transition-colors hover:bg-card/80"
+                className="group rounded-2xl border border-border/70 bg-card/70 p-6 backdrop-blur-sm transition-all duration-300 hover:border-primary/40 hover:bg-card"
               >
                 <div className="mb-4 flex items-center justify-between">
-                  <div className="flex h-9 w-9 items-center justify-center rounded border border-primary/20 bg-primary/8 transition-colors group-hover:bg-primary/15">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/12 transition-colors group-hover:bg-primary/20">
                     <item.icon className="h-4 w-4 text-primary" />
                   </div>
-                  <span className="rounded-sm border border-primary/20 bg-primary/8 px-2 py-0.5 text-xs font-medium text-primary tracking-wide">
+                  <span className="rounded-full border border-primary/20 bg-primary/8 px-2.5 py-0.5 text-xs font-medium tracking-wide text-primary">
                     {item.badge}
                   </span>
                 </div>
@@ -96,13 +98,19 @@ export function Tokenomics() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="rounded-lg border border-border bg-card overflow-hidden"
+            className="relative overflow-hidden rounded-[1.5rem] border border-border bg-card shadow-[0_30px_80px_-30px_rgba(0,0,0,0.7)]"
           >
+            <GradientBar />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-16 -top-10 -z-0 h-52 w-52 rounded-full opacity-50 blur-3xl"
+              style={{ background: "radial-gradient(circle, oklch(0.80 0.12 85 / 0.30), transparent 70%)" }}
+            />
             {/* Card header */}
-            <div className="border-b border-border p-5">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="flex h-10 w-10 items-center justify-center rounded border border-primary/30 bg-primary/10">
-                  <span className="text-base font-bold text-primary">L</span>
+            <div className="relative border-b border-border p-5">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_0_24px_-4px_oklch(0.72_0.16_165/0.7)]">
+                  <span className="text-base font-bold">L</span>
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
@@ -112,11 +120,11 @@ export function Tokenomics() {
                 </div>
               </div>
 
-              <div className="rounded border border-primary/20 bg-primary/8 px-4 py-4 text-center">
+              <div className="rounded-xl border border-primary/20 bg-primary/8 px-4 py-4 text-center">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-primary/70">
                   APY promedio
                 </p>
-                <p className="mt-1 text-5xl font-bold tracking-[-0.03em] tabular-nums text-primary">
+                <p className={`mt-1 text-5xl font-bold tracking-[-0.03em] tabular-nums ${gradientText()}`}>
                   12.5%
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">sobre activos tokenizados</p>

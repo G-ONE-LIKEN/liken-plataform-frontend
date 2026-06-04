@@ -43,7 +43,11 @@ export default function DashboardProjectsPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Proyectos</h1>
+            <p className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_oklch(0.72_0.16_165)]" />
+              Catálogo
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Proyectos</h1>
             <p className="mt-1 text-muted-foreground">
               Explora proyectos de energía renovable disponibles para inversión
             </p>

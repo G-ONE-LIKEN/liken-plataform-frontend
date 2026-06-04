@@ -59,9 +59,9 @@ function TokenBalanceRow({
     : null
 
   return (
-    <div className="flex items-center justify-between rounded-lg bg-secondary/50 p-4">
+    <div className="flex items-center justify-between rounded-xl border border-transparent bg-secondary/50 p-4 transition-colors hover:border-primary/30">
       <div className="flex items-center gap-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/12">
           <Icon className="h-5 w-5 text-primary" />
         </div>
         <div>
@@ -156,7 +156,11 @@ export default function WalletPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Mi Wallet</h1>
+        <p className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-primary">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_oklch(0.72_0.16_165)]" />
+          Wallet
+        </p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Mi Wallet</h1>
         <p className="mt-1 text-muted-foreground">Tus fondos en el sistema y tu conexión blockchain</p>
       </div>
 
@@ -177,18 +181,24 @@ export default function WalletPage() {
           <Wallet className="h-4 w-4" /> Cuenta en el sistema
         </h2>
         <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="bg-gradient-to-br from-primary/20 to-background lg:col-span-2">
-            <CardContent className="p-6">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-primary/20 to-background lg:col-span-2">
+            <div aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full opacity-40 blur-3xl"
+              style={{ background: "radial-gradient(circle, oklch(0.80 0.12 85 / 0.30), transparent 70%)" }}
+            />
+            <CardContent className="relative p-6">
               <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
-                  <Wallet className="h-8 w-8 text-primary-foreground" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_0_30px_-6px_oklch(0.72_0.16_165/0.85)]">
+                  <Wallet className="h-8 w-8" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Balance disponible ({wallet?.currency ?? "USD"})</p>
                   {walletQuery.isLoading ? (
                     <Skeleton className="mt-1 h-10 w-36" />
                   ) : (
-                    <p className="text-4xl font-bold text-foreground">{formatBalance(wallet?.balance)}</p>
+                    <p className="bg-gradient-to-r from-primary to-accent bg-clip-text text-4xl font-bold text-transparent">{formatBalance(wallet?.balance)}</p>
                   )}
                 </div>
               </div>

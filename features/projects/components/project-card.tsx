@@ -25,6 +25,7 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
       title={project.name}
       description={project.description}
       actions={<Badge tone={getStateTone(project.state)}>{getStateLabel(project.state)}</Badge>}
+      className="rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:border-[var(--color-primary)] hover:shadow-[0_22px_50px_-30px_oklch(0.72_0.16_165/0.7)]"
     >
       <div className="grid gap-4">
         <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--color-foreground-muted)]">
@@ -40,7 +41,7 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
 
         <div className="grid gap-3 md:grid-cols-4">
           <Metric label="Minimo" value={formatCurrency(project.minimumInvestment)} />
-          <Metric label="Yield" value={formatPercent(project.expectedAnnualYield)} />
+          <Metric label="Yield" value={formatPercent(project.expectedAnnualYield)} accent />
           <Metric label="Token" value={formatCurrency(project.tokenPrice)} />
           <Metric label="Inicio" value={formatDate(project.startDate)} />
         </div>
@@ -59,13 +60,21 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3">
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3">
       <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-foreground-subtle)]">
         {label}
       </div>
-      <div className="mt-2 text-sm font-medium text-[var(--color-foreground)]">{value}</div>
+      <div
+        className={`mt-2 text-sm font-semibold ${
+          accent
+            ? "bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] bg-clip-text text-transparent"
+            : "font-medium text-[var(--color-foreground)]"
+        }`}
+      >
+        {value}
+      </div>
     </div>
   );
 }

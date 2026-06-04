@@ -12,7 +12,8 @@ export function PageHeader({ eyebrow, title, description, actions }: PageHeaderP
     <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
       <div className="space-y-3">
         {eyebrow && (
-          <span className="inline-flex text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-primary-strong)]">
+          <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-primary-strong)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] shadow-[0_0_8px_oklch(0.72_0.16_165)]" />
             {eyebrow}
           </span>
         )}

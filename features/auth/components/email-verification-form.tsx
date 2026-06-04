@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, RefreshCcw } from "lucide-react";
+import { CheckCircle2, Loader2, RefreshCcw } from "lucide-react";
 import { z } from "zod";
 import { apiClient } from "@/shared/lib/api-client";
 import { Button } from "@/shared/ui/button";
-import { Card } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { AuthPanel } from "@/features/auth/components/auth-shell";
 
 const emailSchema = z.string().email("Ingresa un email valido.");
 
@@ -105,10 +105,20 @@ export function EmailVerificationForm() {
   }
 
   return (
-    <Card
-      title="Verifica tu email"
-      description="Ingresa el codigo de 6 digitos que enviamos a tu correo para habilitar el inicio de sesion."
-      className="w-full max-w-md"
+    <AuthPanel
+      brandLabel="Verifica tu email"
+      brandSubtitle="Codigo de 6 digitos"
+      heading="Ingresa tu codigo"
+      description="Escribi el codigo que enviamos a tu correo para habilitar el inicio de sesion."
+      className="max-w-md"
+      footer={
+        <div className="mt-6 border-t border-[var(--color-border)] pt-5 text-sm text-[var(--color-foreground-muted)]">
+          Ya verificaste tu cuenta?{" "}
+          <Link href={`/login?email=${encodeURIComponent(email)}`} className="font-semibold text-[var(--color-primary)] hover:underline">
+            Ir al login
+          </Link>
+        </div>
+      }
     >
       <form className="grid gap-5" onSubmit={handleConfirm}>
         <Input
@@ -121,7 +131,7 @@ export function EmailVerificationForm() {
 
         <div className="grid gap-3">
           <label className="text-sm font-medium text-[var(--color-foreground)]">Codigo de verificacion</label>
-          <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] px-3 py-4 sm:px-4">
+          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-4 sm:px-4">
             <InputOTP
               maxLength={6}
               value={code}
@@ -144,23 +154,24 @@ export function EmailVerificationForm() {
         </div>
 
         {serverError && (
-          <div className="rounded-lg border border-[rgba(214,69,93,0.3)] bg-[rgba(214,69,93,0.08)] px-4 py-3 text-sm text-[var(--color-danger)]">
+          <div className="rounded-xl border border-[rgba(214,69,93,0.3)] bg-[rgba(214,69,93,0.08)] px-4 py-3 text-sm text-[var(--color-danger)]">
             {serverError}
           </div>
         )}
 
         {successMessage && (
-          <div className="rounded-lg border border-[rgba(38,116,88,0.3)] bg-[rgba(38,116,88,0.08)] px-4 py-3 text-sm text-[var(--color-success)]">
+          <div className="flex items-center gap-3 rounded-xl border border-[rgba(38,116,88,0.3)] bg-[rgba(38,116,88,0.08)] px-4 py-3 text-sm text-[var(--color-success)]">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
             {successMessage}
           </div>
         )}
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button type="submit" className="h-11 w-full gap-2" disabled={isSubmitting}>
           {isSubmitting ? (
-            <span className="inline-flex items-center gap-2">
+            <>
               <Loader2 className="h-4 w-4 animate-spin" />
               Verificando...
-            </span>
+            </>
           ) : (
             "Confirmar email"
           )}
@@ -169,30 +180,23 @@ export function EmailVerificationForm() {
         <Button
           type="button"
           variant="secondary"
-          className="w-full"
+          className="h-11 w-full gap-2"
           disabled={isResending || cooldown > 0}
           onClick={handleResend}
         >
           {isResending ? (
-            <span className="inline-flex items-center gap-2">
+            <>
               <Loader2 className="h-4 w-4 animate-spin" />
               Reenviando...
-            </span>
+            </>
           ) : (
-            <span className="inline-flex items-center gap-2">
+            <>
               <RefreshCcw className="h-4 w-4" />
               {cooldownLabel}
-            </span>
+            </>
           )}
         </Button>
       </form>
-
-      <div className="mt-4 text-sm text-[var(--color-foreground-muted)]">
-        Ya verificaste tu cuenta?{" "}
-        <Link href={`/login?email=${encodeURIComponent(email)}`} className="font-semibold text-[var(--color-primary)]">
-          Ir al login
-        </Link>
-      </div>
-    </Card>
+    </AuthPanel>
   );
 }

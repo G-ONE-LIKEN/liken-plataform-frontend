@@ -52,7 +52,7 @@ function InvestorDashboard() {
   const displayName = user?.email?.split("@")[0] ?? "usuario"
 
   const stats = [
-    { title: "Valor del Portafolio", value: "$0.00", change: "—", icon: Wallet },
+    { title: "Valor del Portafolio", value: "$0.00", change: "—", icon: Wallet, accent: true },
     { title: "Rendimiento Total", value: "$0.00", change: "—", icon: TrendingUp },
     { title: "Tokens LKN", value: "0", change: "—", icon: Zap },
     { title: "Proyectos disponibles", value: String(projects.length || "—"), change: "", icon: Leaf },
@@ -61,7 +61,11 @@ function InvestorDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-primary">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_oklch(0.72_0.16_165)]" />
+          Resumen
+        </p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
         <p className="mt-1 text-muted-foreground">
           Bienvenido de vuelta, {displayName}. Aquí está el resumen de tu portafolio.
         </p>
@@ -70,11 +74,11 @@ function InvestorDashboard() {
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.title} className="bg-card">
+          <Card key={stat.title} className="bg-card transition-colors duration-300 hover:border-primary/40">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <stat.icon className="h-6 w-6 text-primary" />
+                <div className={`flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 ${stat.accent ? "bg-primary text-primary-foreground shadow-[0_0_22px_-5px_oklch(0.72_0.16_165/0.8)]" : "bg-primary/12 text-primary"}`}>
+                  <stat.icon className="h-6 w-6" />
                 </div>
                 {stat.change && (
                   <span className="flex items-center text-sm font-medium text-green-500">
@@ -84,7 +88,7 @@ function InvestorDashboard() {
                 )}
               </div>
               <div className="mt-4">
-                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className={`text-2xl font-bold ${stat.accent ? "bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent" : "text-foreground"}`}>{stat.value}</p>
                 <p className="text-sm text-muted-foreground">{stat.title}</p>
               </div>
             </CardContent>
@@ -116,8 +120,8 @@ function InvestorDashboard() {
                   const Icon = energyIcons[project.energyType] ?? Leaf
                   const status = stateLabels[project.state] ?? stateLabels.DRAFT
                   return (
-                    <div key={project.id} className="flex items-center gap-4 rounded-lg bg-secondary/50 p-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                    <div key={project.id} className="flex items-center gap-4 rounded-xl border border-transparent bg-secondary/50 p-4 transition-colors hover:border-primary/30 hover:bg-secondary">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/12">
                         <Icon className="h-6 w-6 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -129,7 +133,7 @@ function InvestorDashboard() {
                         </div>
                         <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
                           <span>{project.country}</span>
-                          <span className="text-primary font-semibold">
+                          <span className="bg-gradient-to-r from-primary to-accent bg-clip-text font-semibold text-transparent">
                             {parseFloat(project.expectedAnnualYield).toFixed(1)}% APY
                           </span>
                         </div>
