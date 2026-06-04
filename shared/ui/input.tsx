@@ -1,13 +1,14 @@
-import { useId, type InputHTMLAttributes } from "react";
+import { useId, type InputHTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
 
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: string;
   error?: string;
   hint?: string;
+  endAdornment?: ReactNode;
 };
 
-export function Input({ className, label, error, hint, id, ...props }: InputProps) {
+export function Input({ className, label, error, hint, id, endAdornment, ...props }: InputProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const messageId = error || hint ? `${inputId}-message` : undefined;
@@ -19,17 +20,23 @@ export function Input({ className, label, error, hint, id, ...props }: InputProp
           {label}
         </span>
       )}
-      <input
-        id={inputId}
-        aria-invalid={error ? "true" : "false"}
-        aria-describedby={messageId}
-        className={cn(
-          "h-12 w-full min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-foreground-subtle)] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-primary-soft)]",
-          error && "border-[var(--color-danger)] focus:ring-[rgba(214,69,93,0.16)]",
-          className,
+      <span className="relative block">
+        <input
+          id={inputId}
+          aria-invalid={error ? "true" : "false"}
+          aria-describedby={messageId}
+          className={cn(
+            "h-12 w-full min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-foreground-subtle)] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-primary-soft)]",
+            error && "border-[var(--color-danger)] focus:ring-[rgba(214,69,93,0.16)]",
+            endAdornment && "pr-11",
+            className,
+          )}
+          {...props}
+        />
+        {endAdornment && (
+          <span className="absolute inset-y-0 right-1.5 flex items-center">{endAdornment}</span>
         )}
-        {...props}
-      />
+      </span>
       {(error || hint) && (
         <span
           id={messageId}
