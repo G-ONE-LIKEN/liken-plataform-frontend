@@ -72,7 +72,9 @@ export default function InvestmentsPage() {
   const totalInvested = investmentTotalQuery.data?.totalUsdcInvested ?? "0"
   const claimedDividends = sumAmounts(dividendsQuery.data?.content.map((c) => c.amount))
 
-  const isValidLknAddress = env.lknAddress && env.lknAddress !== "0x0000000000000000000000000000000000000000"
+  const isValidLknAddress = Boolean(
+    env.lknAddress && env.lknAddress !== "0x0000000000000000000000000000000000000000",
+  )
 
   const { data: lknBalanceRaw, isLoading: lknLoading } = useReadContract({
     address: env.lknAddress as `0x${string}`,

@@ -44,9 +44,11 @@ function TokenBalanceRow({
   icon: React.ElementType
   address: string
   decimals: number
-  holderAddress: string | null
+  holderAddress: `0x${string}` | null
 }) {
-  const isValidAddress = address && address !== "0x0000000000000000000000000000000000000000"
+  const isValidAddress = Boolean(
+    address && address !== "0x0000000000000000000000000000000000000000",
+  )
 
   const { data: balance, isLoading } = useReadContract({
     address: address as `0x${string}`,
@@ -133,7 +135,7 @@ export default function WalletPage() {
 
   const wallet = walletQuery.data
   const movements = movementsQuery.data?.content ?? []
-  const holderAddress = user?.walletAddress ?? connectedAddress ?? null
+  const holderAddress = (user?.walletAddress ?? connectedAddress ?? null) as `0x${string}` | null
 
   async function handleDeposit() {
     const amount = parseFloat(depositAmount)

@@ -37,7 +37,7 @@ export function useLinkWallet() {
       const message = nonceResponse.data.message;
 
       // 2. Firmar con MetaMask (EIP-191 / personal_sign — wagmi/viem lo manejan).
-      const signature = await signMessageAsync({ message });
+      const signature = await signMessageAsync({ account: address, message });
 
       // 3. Mandar al backend para verificación + persistencia.
       const result = await apiClient.post<{ walletAddress: string }>("/api/users/me/wallet", {

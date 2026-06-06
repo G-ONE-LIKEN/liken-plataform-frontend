@@ -63,7 +63,9 @@ function InvestorDashboard() {
   const claimedDividends = sumAmounts(dividendsQuery.data?.content.map((claim) => claim.amount))
   const walletAddress = user?.walletAddress ?? connectedAddress ?? null
 
-  const isValidLknAddress = env.lknAddress && env.lknAddress !== "0x0000000000000000000000000000000000000000"
+  const isValidLknAddress = Boolean(
+    env.lknAddress && env.lknAddress !== "0x0000000000000000000000000000000000000000",
+  )
 
   const { data: lknBalanceRaw, isLoading: lknLoading } = useReadContract({
     address: env.lknAddress as `0x${string}`,
