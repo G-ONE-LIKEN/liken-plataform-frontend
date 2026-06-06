@@ -1,36 +1,39 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   ArrowLeft, MapPin, Zap, TrendingUp, Coins, Calendar, Target, Wallet,
-  CheckCircle2, Sun, Wind, Droplets, Leaf, Info, AlertCircle,
+  CheckCircle2, Sun, Wind, Droplets, Leaf, Info,
 } from "lucide-react";
 import { useProjectDetail } from "@/features/projects/hooks/use-projects";
+import { ChangeStateMenu } from "@/features/projects/components/change-state-menu";
+import { BuyLknFlow } from "@/features/invest/components/buy-lkn-flow";
+import { RefundCard } from "@/features/invest/components/refund-card";
 import { Badge } from "@/shared/ui/badge";
 import { EmptyState } from "@/shared/ui/empty-state";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { formatCurrency, formatDate, formatPercent } from "@/shared/lib/utils";
+import { formatCurrency, formatDate } from "@/shared/lib/utils";
+import { useSession } from "@/providers/session-provider";
+import { getPermissionContext } from "@/features/auth/lib/session";
 
 const GRADIENT_TEXT = "bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent";
 
 const ENERGY_ICONS = { SOLAR: Sun, WIND: Wind, HYDRO: Droplets, BIOMASS: Leaf };
 const ENERGY_LABELS = {
   SOLAR: "Solar fotovoltaico",
-  WIND: "Eólica",
-  HYDRO: "Hidroeléctrica",
+  WIND: "Eolica",
+  HYDRO: "Hidroelectrica",
   BIOMASS: "Biomasa",
 };
 
 const STATE_CONFIG: Record<string, { label: string; tone: "success" | "warning" | "neutral" | "danger" }> = {
-  PENDING_APPROVAL: { label: "Pendiente de aprobación", tone: "warning" },
-  DRAFT:     { label: "Borrador",            tone: "neutral" },
-  PRE_OPEN:  { label: "En construcción",     tone: "warning" },
-  OPEN:      { label: "Abierto a inversión", tone: "success" },
-  CLOSED:    { label: "Cerrado",             tone: "neutral" },
-  CANCELLED: { label: "Cancelado",           tone: "danger"  },
+  PENDING_APPROVAL: { label: "Pendiente de aprobacion", tone: "warning" },
+  DRAFT: { label: "Borrador", tone: "neutral" },
+  PRE_OPEN: { label: "En construccion", tone: "warning" },
+  OPEN: { label: "Abierto a inversion", tone: "success" },
+  CLOSED: { label: "Cerrado", tone: "neutral" },
+  CANCELLED: { label: "Cancelado", tone: "danger" },
 };
 
 function toNum(v: string | undefined | null): number {
@@ -43,27 +46,21 @@ export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
   const projectId = Number(params.id);
   const { data, isLoading, isError, error } = useProjectDetail(projectId);
-
-  const [investAmount, setInvestAmount] = useState("");
+  const { user } = useSession();
+  const perms = getPermissionContext(user);
 
   const calcs = useMemo(() => {
     if (!data) return null;
-    const tokenPrice = toNum(data.tokenPrice);
-    const minimum   = toNum(data.minimumInvestment);
-    const apy       = toNum(data.expectedAnnualYield);
-    const softCap   = toNum(data.softCap);
-    const hardCap   = toNum(data.hardCap);
-    const raised    = toNum(data.raisedAmount);
-    const inv       = toNum(investAmount);
-
+    const softCap = toNum(data.softCap);
+    const hardCap = toNum(data.hardCap);
+    const raised = toNum(data.raisedAmount);
     return {
-      tokensToReceive: tokenPrice > 0 ? inv / tokenPrice : 0,
-      estAnnualReturn: inv * (apy / 100),
-      estMonthlyReturn: (inv * (apy / 100)) / 12,
+      softCap,
+      hardCap,
+      raised,
       hardCapPct: hardCap > 0 ? Math.min(100, (raised / hardCap) * 100) : 0,
-      softCap, hardCap, raised, minimum, tokenPrice, apy,
     };
-  }, [data, investAmount]);
+  }, [data]);
 
   if (isLoading) {
     return (
@@ -78,7 +75,7 @@ export default function ProjectDetailPage() {
       <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
         <EmptyState
           title="No pudimos cargar el detalle"
-          description={error instanceof Error ? error.message : "Revisá disponibilidad del servicio de proyectos."}
+          description={error instanceof Error ? error.message : "Revisa disponibilidad del servicio de proyectos."}
         />
       </main>
     );
@@ -86,22 +83,30 @@ export default function ProjectDetailPage() {
 
   const EnergyIcon = ENERGY_ICONS[data.energyType] ?? Zap;
   const stateConfig = STATE_CONFIG[data.state] ?? STATE_CONFIG.DRAFT;
-  const isOpen = data.state === "OPEN";
   const showRound = calcs && (calcs.softCap > 0 || calcs.hardCap > 0);
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
-
-      {/* ─── Top bar ───────────────────────────────── */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <Link href="/projects" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
-          Volver al catálogo
+          Volver al catalogo
         </Link>
-        <Badge tone={stateConfig.tone}>{stateConfig.label}</Badge>
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge tone={stateConfig.tone}>{stateConfig.label}</Badge>
+          {(perms.isAdmin || user?.id === data.ownerId) && (
+            <ChangeStateMenu
+              projectId={data.id}
+              currentState={data.state}
+              isAdmin={perms.isAdmin}
+              isOwner={user?.id === data.ownerId}
+              onChainStatus={data.onChainStatus}
+              size="sm"
+            />
+          )}
+        </div>
       </div>
 
-      {/* ─── Hero ──────────────────────────────────── */}
       <header className="relative isolate overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-6 sm:p-8">
         <div
           aria-hidden
@@ -133,19 +138,18 @@ export default function ProjectDetailPage() {
         )}
       </header>
 
-      {/* ─── KPIs ──────────────────────────────────── */}
-      <section className="mt-6 grid gap-3 grid-cols-2 lg:grid-cols-4">
+      <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard icon={TrendingUp} label="Rendimiento anual"
-          value={data.expectedAnnualYield ? `${data.expectedAnnualYield}%` : "—"} accent />
-        <KpiCard icon={Wallet} label="Inversión mínima"
-          value={data.minimumInvestment ? formatCurrency(data.minimumInvestment) : "—"} />
-        <KpiCard icon={Coins} label="Precio del token"
-          value={data.tokenPrice ? formatCurrency(data.tokenPrice) : "—"} />
+          value={data.expectedAnnualYield ? `${data.expectedAnnualYield}%` : "-"} accent />
+        <KpiCard icon={Wallet} label="Inversion minima"
+          value={data.minimumInvestment ? formatCurrency(data.minimumInvestment) : "-"} />
+        <KpiCard icon={Coins}
+          label={data.state === "PRE_OPEN" ? "Precio early bird" : data.state === "OPEN" ? "Precio standard" : "Precio del token"}
+          value={data.currentPrice ? formatCurrency(data.currentPrice) : "-"} />
         <KpiCard icon={Zap} label="Potencia"
-          value={data.installedCapacityMW ? `${data.installedCapacityMW} MW` : "—"} />
+          value={data.installedCapacityMW ? `${data.installedCapacityMW} MW` : "-"} />
       </section>
 
-      {/* ─── Avance de la ronda ───────────────────── */}
       {showRound && (
         <section className="mt-6 rounded-2xl border border-border bg-card p-6">
           <div className="mb-4 flex items-center gap-2">
@@ -170,8 +174,10 @@ export default function ProjectDetailPage() {
               {calcs!.hardCap > 0 && (
                 <div className="space-y-1.5">
                   <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                    <div className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all"
-                      style={{ width: `${calcs!.hardCapPct}%` }} />
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all"
+                      style={{ width: `${calcs!.hardCapPct}%` }}
+                    />
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {calcs!.hardCapPct.toFixed(1)}% del hard cap
@@ -183,19 +189,19 @@ export default function ProjectDetailPage() {
             {calcs!.softCap > 0 && (
               <div className="rounded-lg bg-secondary/40 p-3 text-sm">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground">Soft cap (mínimo viable)</span>
+                  <span className="text-muted-foreground">Soft cap (minimo viable)</span>
                   <span className="font-medium text-foreground">{formatCurrency(String(calcs!.softCap))}</span>
                 </div>
-                {data.softCapDeadline && (
+                {data.expectedOpenDate && (
                   <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className="text-muted-foreground">Fecha límite</span>
-                    <span className="font-medium text-foreground">{formatDate(data.softCapDeadline)}</span>
+                    <span className="text-muted-foreground">Fecha limite (apertura)</span>
+                    <span className="font-medium text-foreground">{formatDate(data.expectedOpenDate)}</span>
                   </div>
                 )}
                 {calcs!.raised < calcs!.softCap && (
                   <p className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
                     <Info className="mt-0.5 h-3 w-3 shrink-0" />
-                    Si no se alcanza el soft cap en la fecha límite, los inversores reciben reembolso total.
+                    Si no se alcanza el soft cap en la fecha limite, los inversores reciben reembolso total.
                   </p>
                 )}
               </div>
@@ -204,157 +210,87 @@ export default function ProjectDetailPage() {
         </section>
       )}
 
-      {/* ─── Simulador ─────────────────────────────── */}
       <section className="mt-6 overflow-hidden rounded-2xl border border-primary/30 bg-card">
         <div aria-hidden className="h-1 w-full bg-gradient-to-r from-primary via-accent to-primary" />
         <header className="border-b border-border bg-gradient-to-br from-primary/10 to-transparent px-6 py-5">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
-            <h2 className="font-semibold text-foreground">Simulá tu inversión</h2>
+            <h2 className="font-semibold text-foreground">Comprar LKN</h2>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Calculá cuánto recibirías en base al rendimiento estimado del proyecto.
+            Aproba USDC y firma la compra en MetaMask. Los tokens se entregan al
+            confirmar la transaccion on-chain.
           </p>
         </header>
 
         <div className="p-6">
-          {/* Input */}
-          <div>
-            <label htmlFor="invest-amount" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Monto a invertir (USD)
-            </label>
-            <Input
-              id="invest-amount"
-              type="number"
-              placeholder={data.minimumInvestment || "100"}
-              value={investAmount}
-              onChange={(e) => setInvestAmount(e.target.value)}
-              min={data.minimumInvestment ?? "0"}
-              className="mt-1.5 text-lg font-semibold"
-            />
-            <div className="mt-2 flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">
-                Mínimo: <span className="font-medium text-foreground">
-                  {data.minimumInvestment ? formatCurrency(data.minimumInvestment) : "—"}
-                </span>
-              </span>
-            </div>
-          </div>
-
-          {/* Chips rápidos */}
-          <div className="mt-3 grid grid-cols-4 gap-2">
-            {["100", "500", "1000", "5000"].map((v) => (
-              <Button
-                key={v}
-                variant={investAmount === v ? "default" : "outline"}
-                size="sm"
-                onClick={() => setInvestAmount(v)}
-              >
-                ${v}
-              </Button>
-            ))}
-          </div>
-
-          {/* Aviso de mínimo */}
-          {calcs && investAmount && toNum(investAmount) > 0 && toNum(investAmount) < calcs.minimum && (
-            <div className="mt-3 flex items-start gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-xs text-yellow-600">
-              <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              El monto es menor a la inversión mínima ({formatCurrency(String(calcs.minimum))}).
-            </div>
-          )}
-
-          {/* Resultados */}
-          {calcs && investAmount && toNum(investAmount) > 0 && (
-            <div className="mt-8 space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <ResultCard
-                  label="Tokens que recibís"
-                  value={calcs.tokensToReceive.toFixed(2)}
-                  icon={Coins}
-                  accent
-                />
-                <ResultCard
-                  label="Ingreso anual estimado"
-                  value={formatCurrency(String(calcs.estAnnualReturn))}
-                  icon={TrendingUp}
-                  accent
-                />
-              </div>
-              <ResultCard
-                label="Ingreso mensual estimado"
-                value={formatCurrency(String(calcs.estMonthlyReturn))}
-                icon={Calendar}
-              />
-              <p className="text-center text-xs text-muted-foreground">
-                Cálculo: {formatCurrency(investAmount)} × {formatPercent(data.expectedAnnualYield)} APY anual
-              </p>
-            </div>
-          )}
-
-          {/* Empty state */}
-          {(!investAmount || toNum(investAmount) <= 0) && (
-            <div className="mt-8 flex items-center gap-3 rounded-xl border border-dashed border-border bg-secondary/30 px-5 py-6 text-sm text-muted-foreground">
-              <Info className="h-4 w-4 shrink-0 text-primary/60" />
-              <span>Ingresá un monto para ver tu rendimiento estimado y cuántos tokens recibirías.</span>
-            </div>
-          )}
-
-          {/* CTA */}
-          <Button className="mt-8 w-full" size="lg" disabled={!isOpen}>
-            {isOpen ? "Invertir ahora" : `Ronda no disponible (${stateConfig.label})`}
-          </Button>
+          <BuyLknFlow project={data} />
         </div>
       </section>
 
-      {/* ─── Cronograma + Detalles técnicos ───────── */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mt-4">
+        <RefundCard project={data} />
+      </div>
 
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-border bg-card p-6">
           <div className="mb-4 flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
             <h2 className="font-semibold text-foreground">Cronograma</h2>
           </div>
           <div className="space-y-3">
-            <TimelineRow label="Inicio de fondeo" date={data.startDate}
-              active={["DRAFT","PRE_OPEN","OPEN"].includes(data.state)} />
-            <TimelineRow label="Apertura del parque" date={data.expectedOpenDate}
-              active={["OPEN","CLOSED"].includes(data.state)} />
-            <TimelineRow label="Fin de la inversión" date={data.endDate}
-              active={data.state === "CLOSED"} />
+            <TimelineRow
+              label="Pre-compra (early bird)"
+              date={null}
+              hint={data.state === "PRE_OPEN" ? "En curso" : data.state === "DRAFT" ? "Proximamente" : "Cumplido"}
+              active={["PRE_OPEN", "OPEN", "CLOSED"].includes(data.state)}
+            />
+            <TimelineRow
+              label="Apertura del parque (deadline soft cap)"
+              date={data.expectedOpenDate}
+              active={["OPEN", "CLOSED"].includes(data.state)}
+            />
+            <TimelineRow
+              label="Parque operativo (precio standard, dividendos)"
+              date={null}
+              hint={data.state === "OPEN" ? "Activo" : data.state === "CLOSED" ? "Cumplido" : "Pendiente"}
+              active={["OPEN", "CLOSED"].includes(data.state)}
+            />
           </div>
         </section>
 
         <section className="rounded-2xl border border-border bg-card p-6">
-          <h2 className="mb-4 font-semibold text-foreground">Detalles técnicos</h2>
+          <h2 className="mb-4 font-semibold text-foreground">Detalles tecnicos</h2>
           <dl className="space-y-3 text-sm">
-            <DetailRow label="Tipo de energía" value={ENERGY_LABELS[data.energyType]} />
+            <DetailRow label="Tipo de energia" value={ENERGY_LABELS[data.energyType]} />
             <DetailRow label="Potencia instalada"
-              value={data.installedCapacityMW ? `${data.installedCapacityMW} MW` : "—"} />
+              value={data.installedCapacityMW ? `${data.installedCapacityMW} MW` : "-"} />
+            <DetailRow label="Soft cap"
+              value={data.softCap ? formatCurrency(data.softCap) : "-"} />
+            <DetailRow label="Hard cap"
+              value={data.hardCap ? formatCurrency(data.hardCap) : "-"} />
             {data.expectedAnnualProductionMWh && (
-              <DetailRow label="Producción anual estimada"
+              <DetailRow label="Produccion anual estimada"
                 value={`${data.expectedAnnualProductionMWh} MWh`} />
             )}
-            <DetailRow label="Tokens totales emitidos" value={data.totalTokens ?? "—"} />
-            <DetailRow label="Ubicación" value={`${data.province}, ${data.country}`} />
+            <DetailRow label="Tokens totales emitidos" value={data.totalTokens ?? "-"} />
+            <DetailRow label="Ubicacion" value={`${data.province}, ${data.country}`} />
           </dl>
         </section>
       </div>
 
-      {/* ─── Por qué invertir ─────────────────────── */}
       <section className="mt-6 rounded-2xl border border-border bg-card p-6">
-        <h2 className="font-semibold text-foreground">¿Por qué invertir en LIKEN?</h2>
+        <h2 className="font-semibold text-foreground">Por que invertir en LIKEN?</h2>
         <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-          <Benefit text="Inversión mínima accesible, sin barreras de capital" />
-          <Benefit text="Dividendos mensuales por generación real de energía" />
+          <Benefit text="Inversion minima accesible, sin barreras de capital" />
+          <Benefit text="Dividendos mensuales por generacion real de energia" />
           <Benefit text="Liquidez en marketplace P2P, sin lock-up" />
-          <Benefit text="Trazabilidad on-chain de cada transacción" />
+          <Benefit text="Trazabilidad on-chain de cada transaccion" />
         </ul>
       </section>
     </main>
   );
 }
-
-// ── Subcomponentes ─────────────────────────────────
 
 function KpiCard({
   icon: Icon, label, value, accent,
@@ -384,7 +320,17 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function TimelineRow({ label, date, active }: { label: string; date: string | undefined; active: boolean }) {
+function TimelineRow({
+  label,
+  date,
+  active,
+  hint,
+}: {
+  label: string;
+  date: string | null | undefined;
+  active: boolean;
+  hint?: string;
+}) {
   return (
     <div className="flex items-center gap-3">
       <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
@@ -392,31 +338,12 @@ function TimelineRow({ label, date, active }: { label: string; date: string | un
       }`}>
         <div className={`h-2 w-2 rounded-full ${active ? "bg-primary" : "bg-muted-foreground/30"}`} />
       </div>
-      <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
+      <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
         <p className="truncate text-sm font-medium text-foreground">{label}</p>
-        <p className="shrink-0 text-xs text-muted-foreground">{date ? formatDate(date) : "Sin definir"}</p>
+        <p className="shrink-0 text-xs text-muted-foreground">
+          {date ? formatDate(date) : hint ?? "Sin definir"}
+        </p>
       </div>
-    </div>
-  );
-}
-
-function ResultCard({
-  label, value, icon: Icon, accent,
-}: {
-  label: string;
-  value: string;
-  icon: React.ElementType;
-  accent?: boolean;
-}) {
-  return (
-    <div className={`rounded-xl border p-5 ${accent ? "border-primary/30 bg-primary/5" : "border-border bg-secondary/30"}`}>
-      <div className="flex items-center gap-2">
-        <Icon className={`h-4 w-4 ${accent ? "text-primary" : "text-muted-foreground"}`} />
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
-      </div>
-      <p className={`mt-3 truncate text-2xl font-bold ${accent ? GRADIENT_TEXT : "text-foreground"}`}>
-        {value}
-      </p>
     </div>
   );
 }

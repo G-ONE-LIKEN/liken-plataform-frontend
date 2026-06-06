@@ -129,7 +129,7 @@ export function AdminDashboard() {
                   <Badge tone="warning">Pendiente</Badge>
                 </div>
                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                  {p.energyType} · Owner #{p.ownerId} · {p.totalTokens} LKN @ {p.tokenPrice}
+                  {p.energyType} · Owner #{p.ownerId} · {p.totalTokens} LKN @ {p.currentPrice}
                 </p>
               </div>
               <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
@@ -215,7 +215,7 @@ export function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">{p.energyType} · {p.totalTokens} LKN totales</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold text-foreground">{formatCurrency(p.tokenPrice)}</p>
+                  <p className="text-sm font-bold text-foreground">{formatCurrency(p.currentPrice)}</p>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">por token</p>
                 </div>
                 <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />

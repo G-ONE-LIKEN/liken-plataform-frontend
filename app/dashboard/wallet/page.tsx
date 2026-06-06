@@ -24,6 +24,9 @@ import { Web3Provider } from "@/features/web3/components/web3-provider"
 import { WalletStatusCard } from "@/features/web3/components/wallet-status-card"
 import { ERC20_ABI } from "@/features/web3/lib/abis"
 import { useWallet, useWalletMovements, useDeposit, useWithdraw } from "@/features/wallet/hooks/use-wallet"
+import { ClaimDividendsCard } from "@/features/invest/components/claim-dividends-card"
+import { InvestmentHistory } from "@/features/invest/components/investment-history"
+import { DividendHistory } from "@/features/invest/components/dividend-history"
 import { env } from "@/shared/config/env"
 import type { MovementType } from "@/features/wallet/types/wallet"
 
@@ -87,8 +90,10 @@ function TokenBalanceRow({
 const MOVEMENT_CONFIG: Record<MovementType, { label: string; icon: React.ElementType; positive: boolean }> = {
   DEPOSIT: { label: "Depósito", icon: ArrowDownLeft, positive: true },
   WITHDRAWAL: { label: "Retiro", icon: ArrowUpRight, positive: false },
-  DIVIDEND: { label: "Dividendo", icon: Gift, positive: true },
-  TOKEN_PURCHASE: { label: "Compra de tokens", icon: TrendingDown, positive: false },
+  DIVIDEND: { label: "Dividendo on-chain", icon: Gift, positive: true },
+  TOKEN_PURCHASE: { label: "Compra de LKN", icon: TrendingDown, positive: false },
+  // Devolución de USDC por soft cap missed (OfferingContract.refund).
+  REFUND: { label: "Refund de ronda", icon: RefreshCw, positive: true },
   P2P_SALE: { label: "Venta P2P", icon: TrendingUp, positive: true },
   P2P_PURCHASE: { label: "Compra P2P", icon: TrendingDown, positive: false },
 }
@@ -280,9 +285,23 @@ export default function WalletPage() {
             </Card>
           </div>
         </div>
+
+        {/* ── Sección 3: Inversiones + dividendos on-chain ─────────── */}
+        <div>
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <Gift className="h-4 w-4" /> Inversiones y dividendos
+          </h2>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <ClaimDividendsCard />
+            <InvestmentHistory />
+          </div>
+          <div className="mt-6">
+            <DividendHistory />
+          </div>
+        </div>
       </Web3Provider>
 
-      {/* ── Sección 3: Historial ─────────────────────────────────── */}
+      {/* ── Sección 4: Historial ─────────────────────────────────── */}
       <div>
         <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           <TrendingUp className="h-4 w-4" /> Historial de movimientos

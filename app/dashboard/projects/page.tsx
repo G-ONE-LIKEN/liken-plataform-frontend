@@ -1,14 +1,16 @@
 "use client"
 
+import Link from "next/link"
 import { Filter, Search } from "lucide-react"
-import { Sun, Wind, Droplets, Leaf } from "lucide-react"
+import { Sun, Wind, Droplets, Leaf, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AccessGate } from "@/features/auth/components/access-gate"
 import { ProjectCard } from "@/features/projects/components/project-card"
 import { CreateProjectDialog } from "@/features/projects/components/create-project-dialog"
-import { useProjects } from "@/features/projects/hooks/use-projects"
+import { useMyProjects, useProjects } from "@/features/projects/hooks/use-projects"
 import { useSession } from "@/providers/session-provider"
 import type { EnergyType } from "@/features/projects/types/projects"
 import { useState } from "react"
@@ -24,12 +26,24 @@ const filterTypes = [
 export default function DashboardProjectsPage() {
   const { permissions } = useSession()
   const projectsQuery = useProjects()
+  const myProjectsQuery = useMyProjects()
   const [search, setSearch] = useState("")
   const [activeFilter, setActiveFilter] = useState<EnergyType | null>(null)
 
   const allProjects = projectsQuery.data?.content ?? []
+  const myProjects = myProjectsQuery.data?.content ?? []
+  const hiddenMine = myProjects.filter(
+    (project) => project.state === "PENDING_APPROVAL" || project.state === "DRAFT",
+  )
+  const pendingMineCount = hiddenMine.filter((project) => project.state === "PENDING_APPROVAL").length
+  const draftMineCount = hiddenMine.filter((project) => project.state === "DRAFT").length
 
   const filtered = allProjects.filter((p) => {
+    // Fase 6: ocultamos del catálogo público los proyectos que aún no están
+    // visibles al inversor (PENDING_APPROVAL todavía sin revisar, DRAFT aprobado
+    // pero sin publicar). Solo aparecen PRE_OPEN/OPEN/CLOSED/CANCELLED.
+    if (p.state === "PENDING_APPROVAL" || p.state === "DRAFT") return false
+
     const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.country.toLowerCase().includes(search.toLowerCase())
@@ -39,7 +53,27 @@ export default function DashboardProjectsPage() {
 
   return (
     <AccessGate allow={(ctx) => ctx.canReadProjects}>
-      <div className="space-y-8">
+        <div className="space-y-8">
+        {permissions.canManageProjects && hiddenMine.length > 0 && (
+          <Alert className="border-primary/20 bg-primary/5">
+            <Info className="text-primary" />
+            <AlertTitle>Tenés proyectos propios que todavía no figuran en el catálogo público</AlertTitle>
+            <AlertDescription>
+              <p>
+                {pendingMineCount > 0 && `${pendingMineCount} pendiente${pendingMineCount === 1 ? "" : "s"} de aprobación`}
+                {pendingMineCount > 0 && draftMineCount > 0 && " y "}
+                {draftMineCount > 0 && `${draftMineCount} en borrador`}
+                . Recién aparecen para inversores cuando avanzan a <span className="font-medium text-foreground">PRE_OPEN</span> u <span className="font-medium text-foreground">OPEN</span>.
+              </p>
+              <p className="flex flex-wrap gap-2 pt-1">
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/dashboard/projects/mine">Ver mis proyectos</Link>
+                </Button>
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>

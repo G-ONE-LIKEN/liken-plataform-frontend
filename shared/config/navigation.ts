@@ -4,7 +4,15 @@ export type NavItem = {
   href: string;
   label: string;
   description: string;
-  permission?: keyof Pick<PermissionContext, "canReadUsers" | "isAdmin" | "isSuperAdmin" | "canManageRoles">;
+  permission?: keyof Pick<
+    PermissionContext,
+    | "canReadUsers"
+    | "isAdmin"
+    | "isSuperAdmin"
+    | "canManageRoles"
+    | "isDeveloper"
+    | "canManageProjects"
+  >;
 };
 
 export const publicNavigation: NavItem[] = [
@@ -30,6 +38,18 @@ export const dashboardNavigation: NavItem[] = [
     href: "/dashboard/projects",
     label: "Proyectos",
     description: "Explorar proyectos y, segun el rol, crear o administrar.",
+  },
+  {
+    href: "/dashboard/projects/mine",
+    label: "Mis proyectos",
+    description: "Proyectos creados por mí — incluye los pendientes de aprobacion.",
+    permission: "canManageProjects",
+  },
+  {
+    href: "/dashboard/admin/projects",
+    label: "Aprobar proyectos",
+    description: "Revisar y aprobar proyectos pendientes propuestos por developers.",
+    permission: "isAdmin",
   },
   {
     href: "/dashboard/investments",

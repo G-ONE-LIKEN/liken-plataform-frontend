@@ -80,7 +80,9 @@ function ReviewContent() {
   const raised  = data.raisedAmount ? Number(data.raisedAmount)  : 0;
   const hardCap = data.hardCap      ? Number(data.hardCap)       : 0;
   const softCap = data.softCap      ? Number(data.softCap)       : 0;
-  const tokenPrice = data.tokenPrice ? Number(data.tokenPrice)  : 0;
+  // En la etapa OPEN se muestra earlyBird; en CLOSED el standard. `currentPrice`
+  // viene resuelto por el backend (espejo de ProjectRegistry.currentPrice).
+  const tokenPrice = data.currentPrice ? Number(data.currentPrice)  : 0;
   const totalTokens = data.totalTokens ? Number(data.totalTokens) : 0;
   const hardCapPct = hardCap > 0 ? Math.min(100, (raised / hardCap) * 100) : 0;
   const softCapPct = softCap > 0 ? Math.min(100, (raised / softCap) * 100) : 0;
@@ -239,7 +241,7 @@ function ReviewContent() {
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {formatCurrency(String(softCap))}
-                  {data.softCapDeadline && ` · vencimiento ${formatDate(data.softCapDeadline)}`}
+                  {data.expectedOpenDate && ` · vencimiento ${formatDate(data.expectedOpenDate)}`}
                 </p>
               </div>
             )}
@@ -247,7 +249,28 @@ function ReviewContent() {
             <Grid>
               <Field label="Tokens emitidos" value={data.totalTokens || "—"} highlight />
               <Field label="Tokens vendidos (est.)" value={tokensSold > 0 ? `${tokensSold.toFixed(2)} (${tokensSoldPct.toFixed(1)}%)` : "—"} />
-              <Field label="Precio por token" value={data.tokenPrice ? formatCurrency(data.tokenPrice) : "—"} />
+              <Field
+                label="Precio vigente"
+                value={
+                  data.currentPrice ? (
+                    <>
+                      {formatCurrency(data.currentPrice)}
+                      {data.state === "OPEN" && (
+                        <span className="ml-2 text-[10px] font-medium uppercase tracking-wider text-primary">
+                          early bird
+                        </span>
+                      )}
+                      {data.state === "CLOSED" && (
+                        <span className="ml-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                          standard
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    "—"
+                  )
+                }
+              />
               <Field label="APY estimado" value={data.expectedAnnualYield ? formatPercent(data.expectedAnnualYield) : "—"} highlight />
               <Field label="Inversión mínima" value={data.minimumInvestment ? formatCurrency(data.minimumInvestment) : "—"} />
               <Field label="Producción anual" value={data.expectedAnnualProductionMWh ? `${data.expectedAnnualProductionMWh} MWh` : "—"} />
@@ -317,7 +340,8 @@ function ReviewContent() {
       <Section title="Estructura financiera" icon={Coins}>
         <Grid>
           <Field label="Total de tokens" value={data.totalTokens || "—"} highlight />
-          <Field label="Precio por token" value={data.tokenPrice ? formatCurrency(data.tokenPrice) : "—"} highlight />
+          <Field label="Early bird (FUNDING)" value={data.earlyBirdPrice ? formatCurrency(data.earlyBirdPrice) : "—"} highlight />
+          <Field label="Standard (ACTIVE)" value={data.standardPrice ? formatCurrency(data.standardPrice) : "—"} highlight />
           <Field
             label="Inversión mínima"
             value={data.minimumInvestment ? formatCurrency(data.minimumInvestment) : "—"}
@@ -338,18 +362,18 @@ function ReviewContent() {
         </Grid>
       </Section>
 
-      {/* Cronograma */}
+      {/* Cronograma — Fase 6: única fecha clave. expectedOpenDate cumple
+          doble función: apertura del parque Y deadline del soft cap. */}
       <Section title="Cronograma" icon={Calendar}>
         <Grid>
-          <Field label="Fecha de inicio" value={data.startDate ? formatDate(data.startDate) : "—"} />
-          <Field label="Fecha de cierre" value={data.endDate ? formatDate(data.endDate) : "—"} />
           <Field
-            label="Apertura esperada de operaciones"
+            label="Apertura esperada del parque"
             value={data.expectedOpenDate ? formatDate(data.expectedOpenDate) : "—"}
+            highlight
           />
           <Field
-            label="Deadline de soft cap"
-            value={data.softCapDeadline ? formatDate(data.softCapDeadline) : "—"}
+            label="Deadline del soft cap"
+            value={data.expectedOpenDate ? formatDate(data.expectedOpenDate) : "—"}
           />
         </Grid>
       </Section>

@@ -5,8 +5,21 @@ export type MovementType =
   | "WITHDRAWAL"
   | "DIVIDEND"
   | "TOKEN_PURCHASE"
+  /** Devolución de USDC al inversor por soft cap missed (OfferingContract.refund). */
+  | "REFUND"
   | "P2P_SALE"
   | "P2P_PURCHASE";
+
+/** Etiqueta legible y tono visual asociado a cada tipo de movimiento. */
+export const MOVEMENT_LABEL: Record<MovementType, { label: string; tone: "success" | "danger" | "neutral" | "warning" }> = {
+  DEPOSIT:        { label: "Depósito",          tone: "success" },
+  WITHDRAWAL:     { label: "Retiro",            tone: "danger"  },
+  DIVIDEND:       { label: "Dividendo on-chain", tone: "success" },
+  TOKEN_PURCHASE: { label: "Compra de LKN",     tone: "danger"  },
+  REFUND:         { label: "Refund de ronda",   tone: "warning" },
+  P2P_SALE:       { label: "Venta P2P",         tone: "success" },
+  P2P_PURCHASE:   { label: "Compra P2P",        tone: "danger"  },
+};
 
 export type WalletResponse = {
   id: number;

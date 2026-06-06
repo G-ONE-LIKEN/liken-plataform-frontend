@@ -30,6 +30,17 @@ export type SessionUser = {
   profileCompleted: boolean;
   emailVerified?: boolean;
   exp?: number;
+  /**
+   * Dirección on-chain vinculada al usuario (EIP-55), o null si no se vinculó.
+   * Es source-of-truth para mapear eventos on-chain → userId en el backend.
+   * Se actualiza vía `POST /api/users/me/wallet` (firma de nonce — ver
+   * `useLinkWallet`). El JWT *puede* traerla; si no, viene del `GET /api/users/me`.
+   */
+  walletAddress?: string | null;
+  /** Estado KYC. Lo trae `GET /api/users/me`. Gate de inversión. */
+  kycStatus?: "NOT_STARTED" | "PENDING" | "APPROVED" | "REJECTED";
+  /** Tier del inversor. Lo trae `GET /api/users/me`. */
+  tier?: "BRONZE" | "SILVER" | "GOLD";
 };
 
 export type PermissionContext = {
@@ -54,4 +65,7 @@ export type PermissionContext = {
 
   // Inversiones (permiso: investment:create — servicio futuro)
   canInvest: boolean;
+
+  /** El usuario tiene una wallet on-chain vinculada (Fase 1 backend). */
+  hasLinkedWallet: boolean;
 };

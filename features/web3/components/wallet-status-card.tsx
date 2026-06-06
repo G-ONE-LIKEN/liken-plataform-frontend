@@ -1,6 +1,5 @@
 "use client";
 
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useChainId, useBalance } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { formatUnits } from "viem";
@@ -8,6 +7,7 @@ import { formatCompactAddress } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge";
 import { Card } from "@/shared/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LinkWalletButton } from "@/features/web3/components/link-wallet-button";
 
 export function WalletStatusCard() {
   const { address, chain, isConnected } = useAccount();
@@ -59,8 +59,11 @@ export function WalletStatusCard() {
           <Row label="Red" value={chain?.name ?? "Sin red"} />
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <ConnectButton />
+        {/* Vínculo wallet ↔ cuenta Liken (Fase 1 backend).
+            Detecta los 4 estados: no conectada, conectada-sin-vincular,
+            vinculada-y-coincide, vinculada-con-mismatch. */}
+        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-4">
+          <LinkWalletButton />
         </div>
       </div>
     </Card>

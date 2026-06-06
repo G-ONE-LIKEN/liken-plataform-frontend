@@ -97,7 +97,7 @@ function PendingCard({ project }: { project: ProjectSummary }) {
                 <span>•</span>
                 <span>Owner #{project.ownerId}</span>
                 <span>•</span>
-                <span>{project.totalTokens} LKN @ {project.tokenPrice}</span>
+                <span>{project.totalTokens} LKN @ {project.currentPrice}</span>
               </div>
             </div>
           </div>
@@ -247,9 +247,9 @@ function ActiveCard({ project }: { project: ProjectSummary }) {
 
       <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border pt-3 text-xs">
         <Metric label="APY estimado" value={formatPercent(project.expectedAnnualYield)} />
-        <Metric label="Token" value={formatCurrency(project.tokenPrice)} />
+        <Metric label="Token" value={formatCurrency(project.currentPrice)} />
         <Metric label="Owner" value={`#${project.ownerId}`} />
-        <Metric label="Inicio" value={project.startDate ? formatDate(project.startDate) : "—"} />
+        <Metric label="Apertura" value={project.expectedOpenDate ? formatDate(project.expectedOpenDate) : "—"} />
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">

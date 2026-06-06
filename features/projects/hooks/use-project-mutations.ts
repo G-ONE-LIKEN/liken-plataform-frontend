@@ -11,12 +11,29 @@ export type CreateProjectRequest = {
   province?: string;
   country?: string;
   totalTokens: string;
-  tokenPrice: string;
+
+  /**
+   * Precio en USDC por LKN durante la etapa FUNDING (ronda abierta).
+   * Debe ser estrictamente menor que `standardPrice`.
+   */
+  earlyBirdPrice: string;
+  /**
+   * Precio en USDC por LKN post-ronda (etapa ACTIVE). Debe ser mayor que
+   * `earlyBirdPrice`. Mismo invariante que el contrato `ProjectRegistry.sol`.
+   */
+  standardPrice: string;
+  softCap?: string;
+  hardCap?: string;
+
   minimumInvestment?: string;
   expectedAnnualYield?: string;
   installedCapacityMW?: string;
-  startDate?: string; // YYYY-MM-DD
-  endDate?: string;   // YYYY-MM-DD
+  /**
+   * Apertura esperada del parque (YYYY-MM-DD). Único campo de fecha que el form
+   * pide al usuario: cumple doble función — es el inicio de operación y el
+   * deadline implícito del soft cap (Fase 6).
+   */
+  expectedOpenDate?: string;
   latitude?: string;
   longitude?: string;
 };

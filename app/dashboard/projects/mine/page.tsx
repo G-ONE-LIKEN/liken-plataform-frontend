@@ -10,9 +10,12 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateProjectDialog } from "@/features/projects/components/create-project-dialog";
+import { ChangeStateMenu } from "@/features/projects/components/change-state-menu";
 import { useMyProjects } from "@/features/projects/hooks/use-projects";
-import type { ProjectSummary, ProjectState } from "@/features/projects/types/projects";
+import type { OnChainStatus, ProjectSummary, ProjectState } from "@/features/projects/types/projects";
 import { formatCurrency, formatDate, formatPercent } from "@/shared/lib/utils";
+import { useSession } from "@/providers/session-provider";
+import { getPermissionContext } from "@/features/auth/lib/session";
 
 const ENERGY_ICONS = { SOLAR: Sun, WIND: Wind, HYDRO: Droplets, BIOMASS: Leaf };
 
@@ -56,6 +59,21 @@ function MyProjectCard({ project }: { project: ProjectSummary }) {
   const cfg = STATE_CONFIG[project.state];
   const EnergyIcon = ENERGY_ICONS[project.energyType] ?? Zap;
   const wasRejected = project.state === "CANCELLED" && project.rejectionReason;
+  const { user } = useSession();
+  const perms = getPermissionContext(user);
+  const isOwner = user?.id === project.ownerId;
+  const onChainTone: Record<OnChainStatus, "neutral" | "warning" | "success" | "danger"> = {
+    NOT_DEPLOYED: "neutral",
+    DEPLOYING: "warning",
+    DEPLOYED: "success",
+    FAILED: "danger",
+  };
+  const onChainLabel: Record<OnChainStatus, string> = {
+    NOT_DEPLOYED: "Sin publicar",
+    DEPLOYING: "Deploy on-chain en curso",
+    DEPLOYED: "Contrato desplegado",
+    FAILED: "Fallo de deploy",
+  };
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/30">
@@ -73,6 +91,14 @@ function MyProjectCard({ project }: { project: ProjectSummary }) {
       </div>
 
       <p className="mt-3 text-xs text-muted-foreground">{cfg.description}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Badge tone={onChainTone[project.onChainStatus]}>{onChainLabel[project.onChainStatus]}</Badge>
+        {project.onChainStatus === "FAILED" && (
+          <span className="text-xs text-muted-foreground">
+            Revisa la configuracion blockchain y reintenta publicar.
+          </span>
+        )}
+      </div>
 
       {wasRejected && (
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
@@ -86,9 +112,9 @@ function MyProjectCard({ project }: { project: ProjectSummary }) {
 
       <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
         <Metric label="Tokens" value={project.totalTokens} />
-        <Metric label="Precio" value={formatCurrency(project.tokenPrice)} />
+        <Metric label="Precio" value={formatCurrency(project.currentPrice)} />
         <Metric label="Yield" value={formatPercent(project.expectedAnnualYield)} />
-        <Metric label="Inicio" value={project.startDate ? formatDate(project.startDate) : "—"} />
+        <Metric label="Apertura" value={project.expectedOpenDate ? formatDate(project.expectedOpenDate) : "—"} />
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
@@ -96,12 +122,24 @@ function MyProjectCard({ project }: { project: ProjectSummary }) {
           <MapPin className="h-3 w-3" />
           {project.province ? `${project.province}, ${project.country}` : project.country}
         </span>
-        <Button asChild size="sm" variant="outline" className="gap-1.5">
-          <Link href={`/projects/${project.id}`}>
-            <Eye className="h-3.5 w-3.5" />
-            Ver detalle
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          {(isOwner || perms.isAdmin) && (
+            <ChangeStateMenu
+              projectId={project.id}
+              currentState={project.state}
+              isAdmin={perms.isAdmin}
+              isOwner={isOwner}
+              onChainStatus={project.onChainStatus}
+              size="sm"
+            />
+          )}
+          <Button asChild size="sm" variant="outline" className="gap-1.5">
+            <Link href={`/projects/${project.id}`}>
+              <Eye className="h-3.5 w-3.5" />
+              Ver detalle
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

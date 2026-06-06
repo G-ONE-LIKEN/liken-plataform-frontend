@@ -128,6 +128,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         permissions: Array.isArray(ctx.permissions) ? ctx.permissions : [],
         profileCompleted: Boolean(ctx.profileCompleted),
         emailVerified: typeof ctx.emailVerified === "boolean" ? ctx.emailVerified : prev?.emailVerified,
+        walletAddress: ctx.walletAddress ?? prev?.walletAddress ?? null,
+        kycStatus: ctx.kycStatus ?? prev?.kycStatus,
+        tier: ctx.tier ?? prev?.tier,
       }));
     } catch {
       // silently fail — fall back to JWT data

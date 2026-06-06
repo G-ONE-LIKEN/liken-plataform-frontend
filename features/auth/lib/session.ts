@@ -12,6 +12,7 @@ type DecodedToken = {
   profileCompleted?: boolean;
   emailVerified?: boolean;
   exp?: number;
+  walletAddress?: string | null;
 };
 
 export function parseSessionToken(token: string): SessionUser {
@@ -42,6 +43,7 @@ export function parseSessionToken(token: string): SessionUser {
     profileCompleted: decoded.profileCompleted ?? false,
     emailVerified: decoded.emailVerified,
     exp: decoded.exp,
+    walletAddress: decoded.walletAddress ?? null,
   };
 }
 
@@ -82,5 +84,8 @@ export function getPermissionContext(user: SessionUser | null): PermissionContex
 
     // investment:create (servicio futuro)
     canInvest: isAdmin || perms.has("investment:create"),
+
+    // Vínculo on-chain (Fase 1 backend)
+    hasLinkedWallet: Boolean(user?.walletAddress),
   };
 }

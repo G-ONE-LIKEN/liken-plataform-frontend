@@ -21,6 +21,10 @@ export function useMyProjects() {
       const response = await apiClient.get<ProjectsPage>("/api/projects/mine");
       return response.data;
     },
+    refetchInterval: (query) =>
+      query.state.data?.content?.some((project) => project.onChainStatus === "DEPLOYING")
+        ? 5000
+        : false,
   });
 }
 
@@ -59,5 +63,7 @@ export function useProjectDetail(id: number) {
       return response.data;
     },
     enabled: Number.isFinite(id),
+    refetchInterval: (query) =>
+      query.state.data?.onChainStatus === "DEPLOYING" ? 5000 : false,
   });
 }
