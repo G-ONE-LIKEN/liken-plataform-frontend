@@ -200,6 +200,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       permissions: freshUser?.permissions ?? jwtUser.permissions,
       profileCompleted: freshUser?.profileCompleted ?? jwtUser.profileCompleted,
       emailVerified: freshUser?.emailVerified ?? jwtUser.emailVerified,
+      walletAddress: freshUser?.walletAddress ?? jwtUser.walletAddress,
+      kycStatus: freshUser?.kycStatus ?? jwtUser.kycStatus,
+      tier: freshUser?.tier ?? jwtUser.tier,
     };
   }, [jwtUser, freshUser]);
 

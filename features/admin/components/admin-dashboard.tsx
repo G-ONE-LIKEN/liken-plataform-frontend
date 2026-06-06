@@ -41,13 +41,14 @@ export function AdminDashboard() {
   const totalUsers = usersQuery.data?.content?.length ?? null;
   const pendingDevs = pendingDevsQuery.data?.content ?? [];
   const pendingProjects = pendingProjectsQuery.data?.content ?? [];
-  const monthlyRevenue = monthlyReportQuery.data?.totalRevenue ?? "0";
   const monthlyP2pVolume = monthlyReportQuery.data?.p2pVolume ?? "0";
   const monthlyP2pOps = monthlyReportQuery.data?.p2pOperations ?? 0;
 
   // Proyectos en captación / abiertos para el snapshot de mercado
   const allProjects = projectsQuery.data?.content ?? [];
   const openProjects = allProjects.filter((p) => p.state === "OPEN" || p.state === "PRE_OPEN");
+  const totalRaised = sumProjectAmount(allProjects, (project) => project.raisedAmount);
+  const totalTokensSold = sumProjectAmount(allProjects, (project) => project.totalTokensSold);
   const stateCounts = countByState(allProjects);
 
   const hasPendingWork = pendingDevs.length > 0 || pendingProjects.length > 0;
@@ -68,14 +69,22 @@ export function AdminDashboard() {
       </div>
 
       {/* KPIs admin */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <KpiCard
           icon={TrendingUp}
-          label="Ingresos del mes"
-          value={monthlyReportQuery.isLoading ? null : formatCurrency(monthlyRevenue)}
-          hint="Comisiones cobradas"
+          label="Captacion total"
+          value={projectsQuery.isLoading ? null : formatCurrency(totalRaised)}
+          hint="USDC recaudado en proyectos"
           tone="brand"
-          href="/dashboard/admin/reports"
+          href="/dashboard/projects"
+        />
+        <KpiCard
+          icon={Coins}
+          label="Tokens vendidos"
+          value={projectsQuery.isLoading ? null : formatTokenAmount(totalTokensSold)}
+          hint="LKN vendidos en primaria"
+          tone="info"
+          href="/dashboard/projects"
         />
         <KpiCard
           icon={Users}
@@ -95,11 +104,11 @@ export function AdminDashboard() {
         />
         <KpiCard
           icon={FolderKanban}
-          label="Proyectos por revisar"
-          value={pendingProjectsQuery.isLoading ? null : String(pendingProjects.length)}
+          label="Proyectos activos"
+          value={projectsQuery.isLoading ? null : String(openProjects.length)}
           hint={pendingProjects.length > 0 ? "Acción pendiente" : "Sin pendientes"}
           tone={pendingProjects.length > 0 ? "warning" : "neutral"}
-          href="/dashboard/admin/projects"
+          href="/dashboard/projects"
         />
       </div>
 
@@ -370,6 +379,23 @@ function MiniStat({
       </div>
     </div>
   );
+}
+
+function sumProjectAmount(
+  projects: ProjectSummary[],
+  select: (project: ProjectSummary) => string | number | null | undefined,
+) {
+  return projects.reduce((acc, project) => {
+    const amount = Number(select(project) ?? 0);
+    return Number.isFinite(amount) ? acc + amount : acc;
+  }, 0);
+}
+
+function formatTokenAmount(value?: string | number | null) {
+  const amount = Number(value ?? 0);
+  return new Intl.NumberFormat("es-AR", {
+    maximumFractionDigits: 4,
+  }).format(Number.isFinite(amount) ? amount : 0);
 }
 
 function StateCount({

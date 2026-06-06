@@ -16,7 +16,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSession } from "@/providers/session-provider"
 import { useProjects } from "@/features/projects/hooks/use-projects"
+import { useInvestmentTotal, useMyInvestments } from "@/features/invest/hooks/use-investments"
+import { useMyDividends } from "@/features/invest/hooks/use-dividends"
 import { AdminDashboard } from "@/features/admin/components/admin-dashboard"
+import { formatCurrency } from "@/shared/lib/utils"
 import type { EnergyType } from "@/features/projects/types/projects"
 
 const energyIcons: Record<EnergyType, React.ElementType> = {
@@ -28,16 +31,15 @@ const energyIcons: Record<EnergyType, React.ElementType> = {
 
 const stateLabels: Record<string, { label: string; className: string }> = {
   OPEN: { label: "Activo", className: "bg-green-500/10 text-green-500" },
-  PRE_OPEN: { label: "Próximamente", className: "bg-primary/10 text-primary" },
+  PRE_OPEN: { label: "En captacion", className: "bg-primary/10 text-primary" },
   DRAFT: { label: "Borrador", className: "bg-muted text-muted-foreground" },
   CLOSED: { label: "Cerrado", className: "bg-secondary text-secondary-foreground" },
   CANCELLED: { label: "Cancelado", className: "bg-destructive/10 text-destructive" },
 }
 
 export default function DashboardPage() {
-  const { user, permissions } = useSession()
+  const { permissions } = useSession()
 
-  // El admin tiene una vista completamente distinta enfocada en gestión de la plataforma
   if (permissions.isAdmin) {
     return <AdminDashboard />
   }
@@ -48,14 +50,41 @@ export default function DashboardPage() {
 function InvestorDashboard() {
   const { user } = useSession()
   const projectsQuery = useProjects()
+  const investmentTotalQuery = useInvestmentTotal()
+  const investmentsQuery = useMyInvestments(0, 100)
+  const dividendsQuery = useMyDividends(0, 100)
   const projects = projectsQuery.data?.content ?? []
   const displayName = user?.email?.split("@")[0] ?? "usuario"
+  const totalInvested = investmentTotalQuery.data?.totalUsdcInvested ?? "0"
+  const totalLkn = sumAmounts(investmentsQuery.data?.content.map((investment) => investment.lknAmount))
+  const claimedDividends = sumAmounts(dividendsQuery.data?.content.map((claim) => claim.amount))
 
   const stats = [
-    { title: "Valor del Portafolio", value: "$0.00", change: "—", icon: Wallet, accent: true },
-    { title: "Rendimiento Total", value: "$0.00", change: "—", icon: TrendingUp },
-    { title: "Tokens LKN", value: "0", change: "—", icon: Zap },
-    { title: "Proyectos disponibles", value: String(projects.length || "—"), change: "", icon: Leaf },
+    {
+      title: "Total invertido",
+      value: investmentTotalQuery.isLoading ? null : formatCurrency(totalInvested),
+      change: investmentTotalQuery.data?.currentTier ?? "",
+      icon: Wallet,
+      accent: true,
+    },
+    {
+      title: "Dividendos cobrados",
+      value: dividendsQuery.isLoading ? null : formatCurrency(claimedDividends),
+      change: Number(claimedDividends) > 0 ? "+" : "",
+      icon: TrendingUp,
+    },
+    {
+      title: "Tokens LKN",
+      value: investmentsQuery.isLoading ? null : formatTokenAmount(totalLkn),
+      change: "",
+      icon: Zap,
+    },
+    {
+      title: "Proyectos disponibles",
+      value: projectsQuery.isLoading ? null : String(projects.length),
+      change: "",
+      icon: Leaf,
+    },
   ]
 
   return (
@@ -67,11 +96,10 @@ function InvestorDashboard() {
         </p>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
         <p className="mt-1 text-muted-foreground">
-          Bienvenido de vuelta, {displayName}. Aquí está el resumen de tu portafolio.
+          Bienvenido de vuelta, {displayName}. Aca esta el resumen de tu portafolio.
         </p>
       </div>
 
-      {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.title} className="bg-card transition-colors duration-300 hover:border-primary/40">
@@ -83,12 +111,16 @@ function InvestorDashboard() {
                 {stat.change && (
                   <span className="flex items-center text-sm font-medium text-green-500">
                     {stat.change}
-                    <ArrowUpRight className="ml-1 h-4 w-4" />
+                    {stat.change === "+" && <ArrowUpRight className="ml-1 h-4 w-4" />}
                   </span>
                 )}
               </div>
               <div className="mt-4">
-                <p className={`text-2xl font-bold ${stat.accent ? "bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent" : "text-foreground"}`}>{stat.value}</p>
+                {stat.value == null ? (
+                  <Skeleton className="h-8 w-28" />
+                ) : (
+                  <p className={`text-2xl font-bold ${stat.accent ? "bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent" : "text-foreground"}`}>{stat.value}</p>
+                )}
                 <p className="text-sm text-muted-foreground">{stat.title}</p>
               </div>
             </CardContent>
@@ -97,7 +129,6 @@ function InvestorDashboard() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
-        {/* Proyectos recientes */}
         <div className="lg:col-span-2">
           <Card className="bg-card">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -124,7 +155,7 @@ function InvestorDashboard() {
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/12">
                         <Icon className="h-6 w-6 text-primary" />
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
                           <p className="truncate font-medium text-foreground">{project.name}</p>
                           <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}>
@@ -146,11 +177,10 @@ function InvestorDashboard() {
           </Card>
         </div>
 
-        {/* Acciones rápidas */}
         <div>
           <Card className="bg-card">
             <CardHeader>
-              <CardTitle>Acciones Rápidas</CardTitle>
+              <CardTitle>Acciones Rapidas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {[
@@ -177,4 +207,20 @@ function InvestorDashboard() {
       </div>
     </div>
   )
+}
+
+function sumAmounts(values?: Array<string | number | null | undefined>) {
+  const total = (values ?? []).reduce<number>((acc, value) => {
+    const amount = Number(value ?? 0)
+    return Number.isFinite(amount) ? acc + amount : acc
+  }, 0)
+
+  return total.toString()
+}
+
+function formatTokenAmount(value?: string | number | null) {
+  const amount = Number(value ?? 0)
+  return new Intl.NumberFormat("es-AR", {
+    maximumFractionDigits: 4,
+  }).format(Number.isFinite(amount) ? amount : 0)
 }

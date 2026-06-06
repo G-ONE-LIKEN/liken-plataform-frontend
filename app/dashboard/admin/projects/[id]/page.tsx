@@ -86,7 +86,10 @@ function ReviewContent() {
   const totalTokens = data.totalTokens ? Number(data.totalTokens) : 0;
   const hardCapPct = hardCap > 0 ? Math.min(100, (raised / hardCap) * 100) : 0;
   const softCapPct = softCap > 0 ? Math.min(100, (raised / softCap) * 100) : 0;
-  const tokensSold = tokenPrice > 0 ? raised / tokenPrice : 0;
+  const estimatedTokensSold = tokenPrice > 0 ? raised / tokenPrice : 0;
+  const realTokensSold = data.totalTokensSold != null ? Number(data.totalTokensSold) : NaN;
+  const hasRealTokensSold = Number.isFinite(realTokensSold);
+  const tokensSold = hasRealTokensSold ? realTokensSold : estimatedTokensSold;
   const tokensSoldPct = totalTokens > 0 ? Math.min(100, (tokensSold / totalTokens) * 100) : 0;
   const softCapReached = softCap > 0 && raised >= softCap;
   const hardCapReached = hardCap > 0 && raised >= hardCap;
@@ -248,7 +251,10 @@ function ReviewContent() {
 
             <Grid>
               <Field label="Tokens emitidos" value={data.totalTokens || "—"} highlight />
-              <Field label="Tokens vendidos (est.)" value={tokensSold > 0 ? `${tokensSold.toFixed(2)} (${tokensSoldPct.toFixed(1)}%)` : "—"} />
+              <Field
+                label={hasRealTokensSold ? "Tokens vendidos" : "Tokens vendidos (est.)"}
+                value={tokensSold > 0 ? `${tokensSold.toFixed(2)} (${tokensSoldPct.toFixed(1)}%)` : "—"}
+              />
               <Field
                 label="Precio vigente"
                 value={

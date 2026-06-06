@@ -54,6 +54,7 @@ export type ProjectSummary = {
   raisedAmount?: string;
   expectedAnnualYield: string;
   expectedAnnualProductionMWh?: string;
+  totalTokensSold?: string;
   createdAt: string;
   updatedAt: string;
   approvedBy?: number | null;
