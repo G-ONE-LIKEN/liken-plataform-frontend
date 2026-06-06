@@ -52,7 +52,7 @@ const navigation: {
   { name: "Proyectos", href: "/dashboard/projects", icon: FolderKanban, allow: (p) => !p.isAdmin },
   { name: "Mis proyectos", href: "/dashboard/projects/mine", icon: FolderKanban, allow: (p) => !p.isAdmin && p.canManageProjects },
   { name: "Marketplace", href: "/dashboard/marketplace", icon: Store, allow: (p) => !p.isAdmin },
-  { name: "Wallet", href: "/dashboard/wallet", icon: Wallet, allow: (p) => !p.isAdmin },
+  { name: "Wallet", href: "/dashboard/wallet", icon: Wallet },
 ]
 
 const secondaryNavigation = [
@@ -86,7 +86,6 @@ const ADMIN_BLOCKED_PREFIXES = [
   "/dashboard/investments",
   "/dashboard/projects",     // catálogo + /mine
   "/dashboard/marketplace",
-  "/dashboard/wallet",
 ]
 
 /**

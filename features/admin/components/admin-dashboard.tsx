@@ -2,8 +2,20 @@
 
 import Link from "next/link";
 import {
-  Users, ShieldCheck, Building2, FolderKanban, TrendingUp, ArrowRight, CheckCircle2,
-  Zap, Activity, Coins, Sun, Wind, Droplets, Leaf,
+  Users,
+  ShieldCheck,
+  Building2,
+  FolderKanban,
+  TrendingUp,
+  ArrowRight,
+  CheckCircle2,
+  Zap,
+  Activity,
+  Coins,
+  Sun,
+  Wind,
+  Droplets,
+  Leaf,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -17,7 +29,10 @@ import { formatCurrency } from "@/shared/lib/utils";
 import type { EnergyType, ProjectSummary } from "@/features/projects/types/projects";
 
 const ENERGY_ICONS: Record<EnergyType, React.ElementType> = {
-  SOLAR: Sun, WIND: Wind, HYDRO: Droplets, BIOMASS: Leaf,
+  SOLAR: Sun,
+  WIND: Wind,
+  HYDRO: Droplets,
+  BIOMASS: Leaf,
 };
 
 function defaultMonthlyRange() {
@@ -41,15 +56,18 @@ export function AdminDashboard() {
   const totalUsers = usersQuery.data?.content?.length ?? null;
   const pendingDevs = pendingDevsQuery.data?.content ?? [];
   const pendingProjects = pendingProjectsQuery.data?.content ?? [];
-  const monthlyP2pVolume = monthlyReportQuery.data?.p2pVolume ?? "0";
-  const monthlyP2pOps = monthlyReportQuery.data?.p2pOperations ?? 0;
-
-  // Proyectos en captación / abiertos para el snapshot de mercado
   const allProjects = projectsQuery.data?.content ?? [];
   const openProjects = allProjects.filter((p) => p.state === "OPEN" || p.state === "PRE_OPEN");
+
   const totalRaised = sumProjectAmount(allProjects, (project) => project.raisedAmount);
   const totalTokensSold = sumProjectAmount(allProjects, (project) => project.totalTokensSold);
   const stateCounts = countByState(allProjects);
+
+  const monthlyPrimaryVolume = monthlyReportQuery.data?.primaryVolume ?? "0";
+  const monthlyPrimaryOps = monthlyReportQuery.data?.primaryOperations ?? 0;
+  const monthlyP2pVolume = monthlyReportQuery.data?.p2pVolume ?? "0";
+  const monthlyP2pOps = monthlyReportQuery.data?.p2pOperations ?? 0;
+  const monthlyRevenue = monthlyReportQuery.data?.totalRevenue ?? "0";
 
   const hasPendingWork = pendingDevs.length > 0 || pendingProjects.length > 0;
 
@@ -58,17 +76,16 @@ export function AdminDashboard() {
       <div>
         <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
           <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_oklch(0.72_0.16_165)]" />
-          Administración
+          Administracion
         </p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground">Hola, {displayName}</h1>
         <p className="mt-1 text-muted-foreground">
           {hasPendingWork
-            ? "Tenés tareas de revisión pendientes. Empezá por las cards de abajo."
-            : "Todo al día. Resumen rápido del estado de la plataforma."}
+            ? "Tenes tareas de revision pendientes. Empeza por las cards de abajo."
+            : "Todo al dia. Resumen rapido del estado de la plataforma."}
         </p>
       </div>
 
-      {/* KPIs admin */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <KpiCard
           icon={TrendingUp}
@@ -89,7 +106,7 @@ export function AdminDashboard() {
         <KpiCard
           icon={Users}
           label="Usuarios totales"
-          value={usersQuery.isLoading ? null : (totalUsers != null ? String(totalUsers) : "—")}
+          value={usersQuery.isLoading ? null : (totalUsers != null ? String(totalUsers) : "-")}
           hint="Cuentas activas"
           tone="info"
           href="/dashboard/users"
@@ -98,7 +115,7 @@ export function AdminDashboard() {
           icon={Building2}
           label="Developers por revisar"
           value={pendingDevsQuery.isLoading ? null : String(pendingDevs.length)}
-          hint={pendingDevs.length > 0 ? "Acción pendiente" : "Sin pendientes"}
+          hint={pendingDevs.length > 0 ? "Accion pendiente" : "Sin pendientes"}
           tone={pendingDevs.length > 0 ? "warning" : "neutral"}
           href="/dashboard/admin/developers"
         />
@@ -106,17 +123,16 @@ export function AdminDashboard() {
           icon={FolderKanban}
           label="Proyectos activos"
           value={projectsQuery.isLoading ? null : String(openProjects.length)}
-          hint={pendingProjects.length > 0 ? "Acción pendiente" : "Sin pendientes"}
+          hint={pendingProjects.length > 0 ? "Accion pendiente" : "Sin pendientes"}
           tone={pendingProjects.length > 0 ? "warning" : "neutral"}
           href="/dashboard/projects"
         />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Proyectos pendientes */}
         <Panel
           title="Proyectos pendientes"
-          subtitle="Propuestas que esperan tu aprobación."
+          subtitle="Propuestas que esperan tu aprobacion."
           href="/dashboard/admin/projects"
           ctaLabel="Revisar todos"
           empty={pendingProjects.length === 0}
@@ -146,10 +162,9 @@ export function AdminDashboard() {
           ))}
         </Panel>
 
-        {/* Developers pendientes */}
         <Panel
           title="Developers pendientes"
-          subtitle="Cuentas que esperan verificación."
+          subtitle="Cuentas que esperan verificacion."
           href="/dashboard/admin/developers"
           ctaLabel="Verificar todos"
           empty={pendingDevs.length === 0}
@@ -174,32 +189,21 @@ export function AdminDashboard() {
         </Panel>
       </div>
 
-      {/* Snapshot del mercado P2P */}
       <Panel
-        title="Mercado P2P · este mes"
-        subtitle="Actividad del mercado secundario y valor de los tokens en captación."
+        title="Actividad operativa · este mes"
+        subtitle="Resumen de compras primarias, mercado P2P e ingresos operativos."
         href="/dashboard/admin/reports"
         ctaLabel="Ver informe"
         empty={false}
         loading={monthlyReportQuery.isLoading || projectsQuery.isLoading}
         emptyText=""
       >
-        <div className="grid gap-3 sm:grid-cols-3">
-          <MiniStat
-            icon={Activity}
-            label="Volumen P2P"
-            value={formatCurrency(monthlyP2pVolume)}
-          />
-          <MiniStat
-            icon={Coins}
-            label="Operaciones P2P"
-            value={String(monthlyP2pOps)}
-          />
-          <MiniStat
-            icon={FolderKanban}
-            label="Proyectos activos"
-            value={String(openProjects.length)}
-          />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <MiniStat icon={TrendingUp} label="Volumen primaria" value={formatCurrency(monthlyPrimaryVolume)} />
+          <MiniStat icon={Coins} label="Ops primaria" value={String(monthlyPrimaryOps)} />
+          <MiniStat icon={Activity} label="Volumen P2P" value={formatCurrency(monthlyP2pVolume)} />
+          <MiniStat icon={Coins} label="Operaciones P2P" value={String(monthlyP2pOps)} />
+          <MiniStat icon={Zap} label="Revenue" value={formatCurrency(monthlyRevenue)} />
         </div>
 
         {openProjects.length > 0 && (
@@ -234,32 +238,30 @@ export function AdminDashboard() {
         )}
       </Panel>
 
-      {/* Estado del catálogo de proyectos */}
       <Panel
-        title="Catálogo de proyectos"
-        subtitle="Distribución por estado en toda la plataforma."
+        title="Catalogo de proyectos"
+        subtitle="Distribucion por estado en toda la plataforma."
         href="/dashboard/projects"
-        ctaLabel="Ver catálogo"
+        ctaLabel="Ver catalogo"
         empty={allProjects.length === 0}
         loading={projectsQuery.isLoading}
-        emptyText="Todavía no hay proyectos publicados."
+        emptyText="Todavia no hay proyectos publicados."
       >
         <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          <StateCount label="Pendientes"      count={stateCounts.PENDING_APPROVAL} tone="warning" />
-          <StateCount label="Borradores"      count={stateCounts.DRAFT}            tone="neutral" />
-          <StateCount label="En captación"    count={stateCounts.PRE_OPEN}         tone="info" />
-          <StateCount label="Abiertos"        count={stateCounts.OPEN}             tone="success" />
-          <StateCount label="Cerrados/Cancel."count={stateCounts.CLOSED + stateCounts.CANCELLED} tone="muted" />
+          <StateCount label="Pendientes" count={stateCounts.PENDING_APPROVAL} tone="warning" />
+          <StateCount label="Borradores" count={stateCounts.DRAFT} tone="neutral" />
+          <StateCount label="En captacion" count={stateCounts.PRE_OPEN} tone="info" />
+          <StateCount label="Abiertos" count={stateCounts.OPEN} tone="success" />
+          <StateCount label="Cerrados/Cancel." count={stateCounts.CLOSED + stateCounts.CANCELLED} tone="muted" />
         </div>
       </Panel>
 
-      {/* Atajos */}
       <section className="rounded-2xl border border-border bg-card p-6">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-foreground">Atajos</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <ShortcutLink href="/dashboard/admin/reports"  icon={TrendingUp} label="Informe de ingresos" />
-          <ShortcutLink href="/dashboard/users"          icon={Users}      label="Gestión de usuarios" />
-          <ShortcutLink href="/dashboard/admin/roles"    icon={ShieldCheck} label="Roles y permisos" />
+          <ShortcutLink href="/dashboard/admin/reports" icon={TrendingUp} label="Informe de ingresos" />
+          <ShortcutLink href="/dashboard/users" icon={Users} label="Gestion de usuarios" />
+          <ShortcutLink href="/dashboard/admin/roles" icon={ShieldCheck} label="Roles y permisos" />
         </div>
       </section>
     </div>
@@ -282,10 +284,10 @@ function KpiCard({
   href?: string;
 }) {
   const tones = {
-    brand:   "border-primary/30   bg-primary/10    text-primary",
-    info:    "border-sky-500/30   bg-sky-500/10    text-sky-500",
+    brand: "border-primary/30 bg-primary/10 text-primary",
+    info: "border-sky-500/30 bg-sky-500/10 text-sky-500",
     warning: "border-yellow-500/30 bg-yellow-500/10 text-yellow-500",
-    neutral: "border-border       bg-secondary/40  text-foreground",
+    neutral: "border-border bg-secondary/40 text-foreground",
   } as const;
 
   const content = (
@@ -410,9 +412,9 @@ function StateCount({
   const tones = {
     warning: "border-yellow-500/30 text-yellow-500",
     neutral: "border-border text-foreground",
-    info:    "border-sky-500/30 text-sky-500",
+    info: "border-sky-500/30 text-sky-500",
     success: "border-green-500/30 text-green-500",
-    muted:   "border-border text-muted-foreground",
+    muted: "border-border text-muted-foreground",
   } as const;
   return (
     <div className={`rounded-lg border bg-secondary/30 px-3 py-3 text-center ${tones[tone]}`}>
@@ -424,7 +426,12 @@ function StateCount({
 
 function countByState(projects: ProjectSummary[]) {
   const counts: Record<string, number> = {
-    PENDING_APPROVAL: 0, DRAFT: 0, PRE_OPEN: 0, OPEN: 0, CLOSED: 0, CANCELLED: 0,
+    PENDING_APPROVAL: 0,
+    DRAFT: 0,
+    PRE_OPEN: 0,
+    OPEN: 0,
+    CLOSED: 0,
+    CANCELLED: 0,
   };
   for (const p of projects) counts[p.state] = (counts[p.state] ?? 0) + 1;
   return counts as Record<"PENDING_APPROVAL" | "DRAFT" | "PRE_OPEN" | "OPEN" | "CLOSED" | "CANCELLED", number>;

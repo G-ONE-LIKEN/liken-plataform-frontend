@@ -15,11 +15,12 @@ const KEY = ["invest"];
  * Endpoint: `GET /api/investments/me`.
  */
 export function useMyInvestments(page = 0, size = 20) {
+  const qs = `?page=${page}&size=${size}`;
   return useQuery({
     queryKey: [...KEY, "investments", page, size],
     queryFn: async () => {
       const response = await apiClient.get<InvestmentsPage>(
-        `/api/investments/me?page=${page}&size=${size}`
+        `/api/investments/me${qs}`
       );
       return response.data;
     },

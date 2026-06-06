@@ -14,11 +14,12 @@ const KEY = ["dividends"];
  * Endpoint: `GET /api/dividends/me`.
  */
 export function useMyDividends(page = 0, size = 20) {
+  const qs = `?page=${page}&size=${size}`;
   return useQuery({
     queryKey: [...KEY, "mine", page, size],
     queryFn: async () => {
       const response = await apiClient.get<DividendClaimsPage>(
-        `/api/dividends/me?page=${page}&size=${size}`
+        `/api/dividends/me${qs}`
       );
       return response.data;
     },

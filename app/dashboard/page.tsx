@@ -11,15 +11,19 @@ import {
   Wind,
   Droplets,
 } from "lucide-react"
+import { useAccount, useReadContract } from "wagmi"
+import { formatUnits } from "viem"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSession } from "@/providers/session-provider"
 import { useProjects } from "@/features/projects/hooks/use-projects"
-import { useInvestmentTotal, useMyInvestments } from "@/features/invest/hooks/use-investments"
+import { useInvestmentTotal } from "@/features/invest/hooks/use-investments"
 import { useMyDividends } from "@/features/invest/hooks/use-dividends"
 import { AdminDashboard } from "@/features/admin/components/admin-dashboard"
 import { formatCurrency } from "@/shared/lib/utils"
+import { ERC20_ABI } from "@/features/web3/lib/abis"
+import { env } from "@/shared/config/env"
 import type { EnergyType } from "@/features/projects/types/projects"
 
 const energyIcons: Record<EnergyType, React.ElementType> = {
@@ -49,17 +53,47 @@ export default function DashboardPage() {
 
 function InvestorDashboard() {
   const { user } = useSession()
+  const { address: connectedAddress } = useAccount()
   const projectsQuery = useProjects()
   const investmentTotalQuery = useInvestmentTotal()
-  const investmentsQuery = useMyInvestments(0, 100)
   const dividendsQuery = useMyDividends(0, 100)
   const projects = projectsQuery.data?.content ?? []
   const displayName = user?.email?.split("@")[0] ?? "usuario"
   const totalInvested = investmentTotalQuery.data?.totalUsdcInvested ?? "0"
-  const totalLkn = sumAmounts(investmentsQuery.data?.content.map((investment) => investment.lknAmount))
   const claimedDividends = sumAmounts(dividendsQuery.data?.content.map((claim) => claim.amount))
+  const walletAddress = user?.walletAddress ?? connectedAddress ?? null
 
-  const stats = [
+  const isValidLknAddress = env.lknAddress && env.lknAddress !== "0x0000000000000000000000000000000000000000"
+
+  const { data: lknBalanceRaw, isLoading: lknLoading } = useReadContract({
+    address: env.lknAddress as `0x${string}`,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: walletAddress ? [walletAddress] : undefined,
+    query: { enabled: !!walletAddress && isValidLknAddress },
+  })
+
+  const lknBalanceDisplay = (() => {
+    if (!isValidLknAddress) return "Token no configurado"
+    if (!walletAddress) {
+      return (
+        <Button variant="outline" size="sm" asChild className="mt-1">
+          <Link href="/dashboard/wallet">Vinculá o conectá tu wallet</Link>
+        </Button>
+      )
+    }
+    if (lknLoading) return null
+    if (lknBalanceRaw === undefined) return formatTokenAmount("0")
+    return formatTokenAmount(formatUnits(lknBalanceRaw, 18))
+  })()
+
+  const stats: Array<{
+    title: string
+    value: React.ReactNode
+    change: string
+    icon: React.ElementType
+    accent?: boolean
+  }> = [
     {
       title: "Total invertido",
       value: investmentTotalQuery.isLoading ? null : formatCurrency(totalInvested),
@@ -75,8 +109,8 @@ function InvestorDashboard() {
     },
     {
       title: "Tokens LKN",
-      value: investmentsQuery.isLoading ? null : formatTokenAmount(totalLkn),
-      change: "",
+      value: lknBalanceDisplay,
+      change: walletAddress ? "Balance on-chain" : "",
       icon: Zap,
     },
     {
@@ -119,7 +153,7 @@ function InvestorDashboard() {
                 {stat.value == null ? (
                   <Skeleton className="h-8 w-28" />
                 ) : (
-                  <p className={`text-2xl font-bold ${stat.accent ? "bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent" : "text-foreground"}`}>{stat.value}</p>
+                  <div className={`text-2xl font-bold ${stat.accent ? "bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent" : "text-foreground"}`}>{stat.value}</div>
                 )}
                 <p className="text-sm text-muted-foreground">{stat.title}</p>
               </div>

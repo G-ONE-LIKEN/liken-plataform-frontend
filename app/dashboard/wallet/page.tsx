@@ -28,6 +28,7 @@ import { ClaimDividendsCard } from "@/features/invest/components/claim-dividends
 import { InvestmentHistory } from "@/features/invest/components/investment-history"
 import { DividendHistory } from "@/features/invest/components/dividend-history"
 import { env } from "@/shared/config/env"
+import { useSession } from "@/providers/session-provider"
 import type { MovementType } from "@/features/wallet/types/wallet"
 
 function TokenBalanceRow({
@@ -36,22 +37,23 @@ function TokenBalanceRow({
   icon: Icon,
   address,
   decimals,
+  holderAddress,
 }: {
   symbol: string
   name: string
   icon: React.ElementType
   address: string
   decimals: number
+  holderAddress: string | null
 }) {
-  const { address: userAddress, isConnected } = useAccount()
   const isValidAddress = address && address !== "0x0000000000000000000000000000000000000000"
 
   const { data: balance, isLoading } = useReadContract({
     address: address as `0x${string}`,
     abi: ERC20_ABI,
     functionName: "balanceOf",
-    args: userAddress ? [userAddress] : undefined,
-    query: { enabled: isConnected && !!userAddress && isValidAddress },
+    args: holderAddress ? [holderAddress] : undefined,
+    query: { enabled: !!holderAddress && isValidAddress },
   })
 
   const formatted = balance !== undefined
@@ -73,7 +75,7 @@ function TokenBalanceRow({
         </div>
       </div>
       <div className="text-right">
-        {!isConnected ? (
+        {!holderAddress ? (
           <p className="text-sm text-muted-foreground">Conectá tu wallet</p>
         ) : !isValidAddress ? (
           <p className="text-sm text-muted-foreground">Próximamente</p>
@@ -117,6 +119,8 @@ function formatDate(iso: string) {
 }
 
 export default function WalletPage() {
+  const { user } = useSession()
+  const { address: connectedAddress } = useAccount()
   const walletQuery = useWallet()
   const movementsQuery = useWalletMovements()
   const deposit = useDeposit()
@@ -129,6 +133,7 @@ export default function WalletPage() {
 
   const wallet = walletQuery.data
   const movements = movementsQuery.data?.content ?? []
+  const holderAddress = user?.walletAddress ?? connectedAddress ?? null
 
   async function handleDeposit() {
     const amount = parseFloat(depositAmount)
@@ -272,6 +277,7 @@ export default function WalletPage() {
                     icon={DollarSign}
                     address={env.usdcAddress}
                     decimals={6}
+                    holderAddress={holderAddress}
                   />
                   <TokenBalanceRow
                     symbol="LKN"
@@ -279,6 +285,7 @@ export default function WalletPage() {
                     icon={Zap}
                     address={env.lknAddress ?? "0x0000000000000000000000000000000000000000"}
                     decimals={18}
+                    holderAddress={holderAddress}
                   />
                 </div>
               </CardContent>

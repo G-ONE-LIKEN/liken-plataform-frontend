@@ -93,7 +93,7 @@ export function BuyLknFlow({ project }: { project: ProjectSummary }) {
     (typeof allowance === "bigint" ? allowance : 0n) < usdcAmountRaw;
 
   // ── Escritura on-chain ──────────────────────────────────────────────────
-  const { writeContract, data: txHash, isPending, reset } = useWriteContract();
+  const { writeContract, data: txHash, isPending, error: writeError, reset } = useWriteContract();
   const { isLoading: txConfirming, isSuccess: txConfirmed } =
     useWaitForTransactionReceipt({ hash: txHash });
 
@@ -238,6 +238,22 @@ export function BuyLknFlow({ project }: { project: ProjectSummary }) {
           title="No se puede invertir"
           description={preview.data.reason ?? "Estado del proyecto no permitido."}
         />
+      )}
+
+      {/* Error de transacción */}
+      {writeError && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <p className="font-semibold">Error en la transacción</p>
+          <p className="mt-1 text-xs">
+            {writeError.message.includes("gas limit too high")
+              ? "El nodo rechazó la transacción por límite de gas. Probablemente el contrato no existe en esta red o la función falla inmediatamente. Verificá que los contratos estén deployados en Sepolia."
+              : writeError.message.includes("User rejected")
+              ? "Rechazaste la transacción en MetaMask."
+              : writeError.message.includes("insufficient funds")
+              ? "No tenés suficiente SepoliaETH para pagar el gas. Pedí en un faucet."
+              : writeError.message}
+          </p>
+        </div>
       )}
 
       {/* CTA: approve → buy */}
