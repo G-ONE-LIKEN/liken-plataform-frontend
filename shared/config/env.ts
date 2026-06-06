@@ -7,8 +7,15 @@
 //   está acá, viene del backend en `ProjectSummary.offeringContractAddress`.
 // - Se quitaron `paymentGatewayAddress` y `onrampAddress`: esos contratos no
 //   existen en la arquitectura final (ver ADR-0013 y la nueva doc de blockchain).
+function normalizeApiUrl(value: string | undefined) {
+  const fallback = "http://localhost:8090";
+  const raw = (value ?? fallback).trim();
+  const withoutTrailingSlash = raw.replace(/\/+$/, "");
+  return withoutTrailingSlash.replace(/\/api$/i, "");
+}
+
 export const env = {
-  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8090",
+  apiUrl: normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL),
   walletConnectProjectId:
     process.env.NEXT_PUBLIC_WC_PROJECT_ID ?? "demo-wallet-connect-project-id",
   chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? "11155111"),
