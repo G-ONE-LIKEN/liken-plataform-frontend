@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { Web3Provider } from "@/features/web3/components/web3-provider";
 
+
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
 
