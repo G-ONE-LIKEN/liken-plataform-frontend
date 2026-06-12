@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { CheckCircle2, ExternalLink, Loader2, RefreshCw } from "lucide-react";
 import {
   useAccount,
@@ -47,10 +48,13 @@ export function RefundCard({ project }: { project: ProjectSummary }) {
   const { isLoading: txConfirming, isSuccess: txConfirmed } =
     useWaitForTransactionReceipt({ hash: txHash });
 
-  if (txConfirmed && txHash) {
-    void refetchContribution();
-    void queryClient.invalidateQueries({ queryKey: ["wallet"] });
-  }
+  // En useEffect: durante el render dispara un loop de refetch/invalidación.
+  useEffect(() => {
+    if (txConfirmed && txHash) {
+      void refetchContribution();
+      void queryClient.invalidateQueries({ queryKey: ["wallet"] });
+    }
+  }, [txConfirmed, txHash, queryClient, refetchContribution]);
 
   // Si la ronda no falló o no hay contrato, no renderizamos nada.
   if (!eligibleByState || !offering) return null;
