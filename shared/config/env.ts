@@ -10,6 +10,10 @@
 function normalizeApiUrl(value: string | undefined) {
   const fallback = "http://localhost:8090";
   const raw = (value ?? fallback).trim();
+  // "/" = same-origin: las requests salen relativas (/api/...) y el ingress
+  // enruta /api al gateway bajo el mismo dominio (liken.lat y www.liken.lat).
+  // Así no hay CORS ni dependencia del host por el que entra el usuario.
+  if (raw === "/") return "";
   const withoutTrailingSlash = raw.replace(/\/+$/, "");
   return withoutTrailingSlash.replace(/\/api$/i, "");
 }
