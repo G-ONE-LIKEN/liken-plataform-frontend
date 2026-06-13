@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { TrendingUp, TrendingDown, ArrowUpRight, Search, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ export function MarketplaceView() {
   const [sellAmount, setSellAmount] = useState<string>("");
   const [sellPrice, setSellPrice] = useState<string>("");
   const [orderSubmitted, setOrderSubmitted] = useState<boolean>(false);
+  const [activeAction, setActiveAction] = useState<"sell" | "buy" | null>(null);
+  const [selectedBuyOrder, setSelectedBuyOrder] = useState<any>(null);
   const { address } = useAccount();
 
   const { data: openOrders, isLoading: isLoadingOrders } = useOpenOrders(selectedProjectId);
@@ -36,26 +38,76 @@ export function MarketplaceView() {
   const handleApproveAndSell = () => {
     if (!sellAmount || !sellPrice) return;
     setOrderSubmitted(false);
+    setActiveAction("sell");
     
-    // 1. Approve LKN for PLATFORM_ADMIN
+    // 1. Approve LKN for LknMarketplace contract address
     const amountWei = parseUnits(sellAmount, 18);
     writeContract({
       address: CONTRACTS.linkenToken,
       abi: ERC20_ABI,
       functionName: "approve",
-      args: [env.platformAdminAddress as `0x${string}`, amountWei],
+      args: [env.marketplaceAddress as `0x${string}`, amountWei],
     }, {
-      onSuccess: () => {
-        // We shouldn't create the order immediately until tx is mined,
-        // but for simplicity we assume the user will wait or we handle it in useEffect.
-        // In a real flow, we'd watch `isConfirmed` then fire the API.
+      onError: (err: any) => {
+        toast({
+          title: "Error de Aprobación",
+          description: err instanceof Error ? err.message : "Intente nuevamente.",
+          variant: "destructive",
+        });
+        setActiveAction(null);
       }
     });
   };
 
-  const handleBuy = (orderId: number) => {
-    buyOrderMutation.mutate(orderId);
+  const handleBuy = (order: any) => {
+    setActiveAction("buy");
+    setSelectedBuyOrder(order);
+    
+    // Total USDC = tokensAmount * pricePerToken
+    const totalUsdc = order.tokensAmount * order.pricePerToken;
+    const amountUSDC6 = parseUnits(totalUsdc.toString(), 6);
+    
+    writeContract({
+      address: env.usdcAddress as `0x${string}`,
+      abi: ERC20_ABI,
+      functionName: "approve",
+      args: [env.marketplaceAddress as `0x${string}`, amountUSDC6],
+    }, {
+      onError: (err: any) => {
+        toast({
+          title: "Error de Aprobación",
+          description: err instanceof Error ? err.message : "Intente nuevamente.",
+          variant: "destructive",
+        });
+        setActiveAction(null);
+        setSelectedBuyOrder(null);
+      }
+    });
   };
+
+  useEffect(() => {
+    if (isConfirmed && activeAction === "buy" && selectedBuyOrder) {
+      buyOrderMutation.mutate(selectedBuyOrder.id, {
+        onSuccess: () => {
+          toast({
+            title: "Compra iniciada exitosamente",
+            description: "Aprobación de USDC confirmada. El backend está liquidando el intercambio on-chain.",
+          });
+          setActiveAction(null);
+          setSelectedBuyOrder(null);
+        },
+        onError: (err: any) => {
+          toast({
+            title: "Error al comprar",
+            description: err instanceof Error ? err.message : "Intente nuevamente.",
+            variant: "destructive",
+          });
+          setActiveAction(null);
+          setSelectedBuyOrder(null);
+        }
+      });
+    }
+  }, [isConfirmed, activeAction, selectedBuyOrder]);
 
   const selectedToken = tokens.find((t) => t.projectId === selectedProjectId);
 
@@ -134,7 +186,14 @@ export function MarketplaceView() {
                 <div key={ask.id} className="flex justify-between py-1 text-sm items-center">
                   <span className="text-red-500">${ask.pricePerToken.toFixed(2)}</span>
                   <span className="text-muted-foreground">{ask.tokensAmount} LKN</span>
-                  <Button size="sm" className="h-6 text-xs bg-green-600 hover:bg-green-700" onClick={() => handleBuy(ask.id)} disabled={buyOrderMutation.isPending}>Comprar</Button>
+                  <Button 
+                    size="sm" 
+                    className="h-6 text-xs bg-green-600 hover:bg-green-700" 
+                    onClick={() => handleBuy(ask)} 
+                    disabled={(activeAction === "buy" && selectedBuyOrder?.id === ask.id && (isApproving || isConfirming)) || buyOrderMutation.isPending}
+                  >
+                    {activeAction === "buy" && selectedBuyOrder?.id === ask.id ? "Comprando..." : "Comprar"}
+                  </Button>
                 </div>
               ))}
               {asks.length === 0 && !isLoadingOrders && <p className="text-sm text-muted-foreground italic">No hay órdenes de venta</p>}
@@ -174,10 +233,10 @@ export function MarketplaceView() {
               onClick={handleApproveAndSell} 
               disabled={isApproving || isConfirming || !sellAmount || !sellPrice || createOrderMutation.isPending}
             >
-              {isApproving ? "Aprobando en Wallet..." : isConfirming ? "Confirmando Tx..." : "Vender (Aprobar on-chain primero)"}
+              {isApproving && activeAction === "sell" ? "Aprobando en Wallet..." : isConfirming && activeAction === "sell" ? "Confirmando Tx..." : "Vender (Aprobar on-chain primero)"}
             </Button>
             
-            {isConfirmed && !orderSubmitted && (
+            {isConfirmed && activeAction === "sell" && !orderSubmitted && (
                <div className="mt-4">
                  <p className="text-sm text-green-500 flex items-center gap-1 mb-2"><CheckCircle2 className="w-4 h-4" /> Aprobado! Creando orden...</p>
                  <Button 

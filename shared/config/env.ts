@@ -41,6 +41,10 @@ export const env = {
   platformAdminAddress:
     process.env.NEXT_PUBLIC_PLATFORM_ADMIN_ADDRESS ?? "0x0000000000000000000000000000000000000000",
 
+  /** Contrato de Marketplace para swaps on-chain LKN/USDC. */
+  marketplaceAddress:
+    process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS ?? "0x0000000000000000000000000000000000000000",
+
   /** Prefijo del block explorer para deeplinks (sepolia.etherscan.io o etherscan.io). */
   blockExplorerUrl:
     process.env.NEXT_PUBLIC_BLOCK_EXPLORER_URL ?? "https://sepolia.etherscan.io",
