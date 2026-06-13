@@ -55,7 +55,10 @@ function TokenBalanceRow({
     abi: ERC20_ABI,
     functionName: "balanceOf",
     args: holderAddress ? [holderAddress] : undefined,
-    query: { enabled: !!holderAddress && isValidAddress },
+    query: {
+      enabled: !!holderAddress && isValidAddress,
+      refetchInterval: 3000,
+    },
   })
 
   const formatted = balance !== undefined

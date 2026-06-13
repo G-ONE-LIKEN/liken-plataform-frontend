@@ -81,7 +81,10 @@ export default function InvestmentsPage() {
     abi: ERC20_ABI,
     functionName: "balanceOf",
     args: wallet ? [wallet] : undefined,
-    query: { enabled: !!wallet && isValidLknAddress },
+    query: {
+      enabled: !!wallet && isValidLknAddress,
+      refetchInterval: 3000,
+    },
   })
 
   const pending = usePendingDividends(wallet)

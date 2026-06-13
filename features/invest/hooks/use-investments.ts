@@ -24,6 +24,7 @@ export function useMyInvestments(page = 0, size = 20) {
       );
       return response.data;
     },
+    refetchInterval: 3000,
   });
 }
 
@@ -40,6 +41,7 @@ export function useInvestmentTotal() {
       );
       return response.data;
     },
+    refetchInterval: 3000,
   });
 }
 

@@ -1,10 +1,13 @@
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { sepolia } from "wagmi/chains";
+import { sepolia, hardhat } from "wagmi/chains";
 import { env } from "@/shared/config/env";
+
+const activeChain = env.chainId === 31337 ? hardhat : sepolia;
 
 export const wagmiConfig = getDefaultConfig({
   appName: "LIKEN",
   projectId: env.walletConnectProjectId,
-  chains: [sepolia],
+  chains: [activeChain],
   ssr: true,
 });
+

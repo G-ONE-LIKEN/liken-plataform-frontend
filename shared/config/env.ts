@@ -37,6 +37,10 @@ export const env = {
   usdcAddress:
     process.env.NEXT_PUBLIC_USDC_ADDRESS ?? "0x0000000000000000000000000000000000000000",
 
+  /** Address del administrador de la plataforma para aprobaciones de Marketplace P2P. */
+  platformAdminAddress:
+    process.env.NEXT_PUBLIC_PLATFORM_ADMIN_ADDRESS ?? "0x0000000000000000000000000000000000000000",
+
   /** Prefijo del block explorer para deeplinks (sepolia.etherscan.io o etherscan.io). */
   blockExplorerUrl:
     process.env.NEXT_PUBLIC_BLOCK_EXPLORER_URL ?? "https://sepolia.etherscan.io",

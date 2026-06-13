@@ -72,7 +72,10 @@ function InvestorDashboard() {
     abi: ERC20_ABI,
     functionName: "balanceOf",
     args: walletAddress ? [walletAddress] : undefined,
-    query: { enabled: !!walletAddress && isValidLknAddress },
+    query: {
+      enabled: !!walletAddress && isValidLknAddress,
+      refetchInterval: 3000,
+    },
   })
 
   const lknBalanceDisplay = (() => {
