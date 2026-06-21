@@ -7,10 +7,23 @@ import type {
   WalletMovementsPage,
   DepositRequest,
   WithdrawRequest,
+  UserHoldingResponse,
 } from "@/features/wallet/types/wallet";
 
 const WALLET_KEY = ["wallet"];
 const MOVEMENTS_KEY = ["wallet", "movements"];
+const HOLDINGS_KEY = ["wallet", "holdings"];
+
+export function useMyHoldings() {
+  return useQuery({
+    queryKey: HOLDINGS_KEY,
+    queryFn: async () => {
+      const response = await apiClient.get<UserHoldingResponse[]>("/api/projects/holdings/me");
+      return response.data;
+    },
+    refetchInterval: 3000,
+  });
+}
 
 export function useWallet() {
   return useQuery({

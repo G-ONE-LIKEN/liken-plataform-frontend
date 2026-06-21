@@ -56,3 +56,18 @@ export function useBuyOrder() {
     },
   });
 }
+
+export function useCancelOrder() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (orderId: number) => {
+      const res = await apiClient.del(`/api/marketplace/orders/${orderId}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketplace-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["marketplace-my-orders"] });
+    },
+  });
+}

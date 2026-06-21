@@ -51,3 +51,10 @@ export type WithdrawRequest = {
   amount: number;
   description?: string;
 };
+
+export type UserHoldingResponse = {
+  projectId: number;
+  userId: number;
+  tokensAmount: number;
+  usdcInvested: number;
+};
