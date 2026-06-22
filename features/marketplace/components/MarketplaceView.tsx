@@ -6,7 +6,8 @@ import { TrendingUp, TrendingDown, ArrowUpRight, Search, CheckCircle2 } from "lu
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useOpenOrders, useBuyOrder, useCreateOrder } from "../hooks/useOrderBook";
+import { useOpenOrders, useBuyOrder, useCreateOrder, useCancelOrder } from "../hooks/useOrderBook";
+import { useSession } from "@/providers/session-provider";
 import { ERC20_ABI } from "@/features/web3/lib/abis";
 import { CONTRACTS } from "@/features/web3/lib/contracts";
 import { env } from "@/shared/config/env";
@@ -27,10 +28,12 @@ export function MarketplaceView() {
   const [activeAction, setActiveAction] = useState<"sell" | "buy" | null>(null);
   const [selectedBuyOrder, setSelectedBuyOrder] = useState<any>(null);
   const { address } = useAccount();
+  const { user } = useSession();
 
   const { data: openOrders, isLoading: isLoadingOrders } = useOpenOrders(selectedProjectId);
   const buyOrderMutation = useBuyOrder();
   const createOrderMutation = useCreateOrder();
+  const cancelOrderMutation = useCancelOrder();
 
   const { data: hash, isPending: isApproving, writeContract } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
@@ -113,7 +116,7 @@ export function MarketplaceView() {
 
   // Split orders into Asks (Sell) and Bids (Buy)
   const asks = openOrders?.filter((o) => o.side === "SELL").sort((a, b) => a.pricePerToken - b.pricePerToken) || [];
-  const bids = openOrders?.filter((o) => o.side === "BUY").sort((a, b) => b.pricePerToken - a.pricePerToken) || [];
+  const myOrders = asks.filter((o) => o.sellerId === user?.id);
 
   return (
     <div className="space-y-8">
@@ -190,9 +193,15 @@ export function MarketplaceView() {
                     size="sm"
                     className="h-6 text-xs bg-green-600 hover:bg-green-700"
                     onClick={() => handleBuy(ask)}
-                    disabled={(activeAction === "buy" && selectedBuyOrder?.id === ask.id && (isApproving || isConfirming)) || buyOrderMutation.isPending}
+                    disabled={
+                      ask.sellerId === user?.id || 
+                      (activeAction === "buy" && selectedBuyOrder?.id === ask.id && (isApproving || isConfirming)) || 
+                      buyOrderMutation.isPending
+                    }
                   >
-                    {activeAction === "buy" && selectedBuyOrder?.id === ask.id ? "Comprando..." : "Comprar"}
+                    {ask.sellerId === user?.id 
+                      ? "Tu Orden" 
+                      : (activeAction === "buy" && selectedBuyOrder?.id === ask.id ? "Comprando..." : "Comprar")}
                   </Button>
                 </div>
               ))}
@@ -273,6 +282,52 @@ export function MarketplaceView() {
             )}
           </CardContent>
         </Card>
+
+        {myOrders.length > 0 && (
+          <Card className="bg-card lg:col-span-3 border-primary/20">
+            <CardHeader><CardTitle>Mis Órdenes Activas</CardTitle></CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted-foreground">
+                      <th className="pb-2 font-medium">Cantidad</th>
+                      <th className="pb-2 font-medium">Precio Unitario</th>
+                      <th className="pb-2 font-medium">Total</th>
+                      <th className="pb-2 font-medium text-right">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {myOrders.map((order) => (
+                      <tr key={order.id}>
+                        <td className="py-3 font-medium">{order.tokensAmount} LKN</td>
+                        <td className="py-3">${order.pricePerToken.toFixed(2)}</td>
+                        <td className="py-3">${(order.tokensAmount * order.pricePerToken).toFixed(2)}</td>
+                        <td className="py-3 text-right">
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            className="h-8 text-xs"
+                            onClick={() => {
+                              cancelOrderMutation.mutate(order.id, {
+                                onSuccess: () => {
+                                  toast({ title: "Orden cancelada", description: "Tu orden ha sido removida del libro de ofertas." });
+                                }
+                              });
+                            }}
+                            disabled={cancelOrderMutation.isPending}
+                          >
+                            {cancelOrderMutation.isPending ? "Cancelando..." : "Cancelar"}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
       </div>
     </div>
