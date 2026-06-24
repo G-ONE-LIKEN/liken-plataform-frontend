@@ -1,0 +1,24 @@
+# Ignore build and dependency dirs
+node_modules/
+.next/
+out/
+build/
+.git/
+
+# Ignore document/image/config files
+*.md
+*.json
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+*.xml
+*.yml
+*.yaml
+*.txt
+*.html
+*.htm
+*.config.*

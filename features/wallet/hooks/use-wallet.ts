@@ -19,6 +19,7 @@ export function useWallet() {
       const response = await apiClient.get<WalletResponse>("/api/wallets/me");
       return response.data;
     },
+    refetchInterval: 3000,
   });
 }
 
@@ -31,6 +32,7 @@ export function useWalletMovements(page = 0, size = 20) {
       );
       return response.data;
     },
+    refetchInterval: 3000,
   });
 }
 
