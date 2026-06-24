@@ -35,11 +35,32 @@ export function LoginForm() {
     setForm((current) => (current.email === email ? current : { ...current, email }));
   }, [searchParams]);
 
-  const finishLogin = useCallback((token: string) => {
+  const finishLogin = useCallback(async (token: string) => {
     login(token);
     const parsed = parseSessionToken(token);
     const nextPath = searchParams.get("next") ?? "/dashboard";
-    router.push(parsed.profileCompleted ? nextPath : `/complete-profile?next=${encodeURIComponent(nextPath)}`);
+
+    if (!parsed.profileCompleted) {
+      router.push(`/complete-profile?next=${encodeURIComponent(nextPath)}`);
+      return;
+    }
+
+    // Consultar el estado KYC antes de redirigir
+    try {
+      const response = await apiClient.get<{ status: string }>('/api/users/me/kyc');
+      const kycStatus = response.data.status;
+
+      if (kycStatus === 'NOT_STARTED' || kycStatus === 'REJECTED') {
+        router.push('/kyc/welcome');
+      } else if (kycStatus === 'PENDING') {
+        router.push('/kyc/pending');
+      } else {
+        router.push(nextPath);
+      }
+    } catch {
+      // Si falla la consulta KYC, pasamos al dashboard
+      router.push(nextPath);
+    }
   }, [login, router, searchParams]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -76,7 +97,7 @@ export function LoginForm() {
     setServerError(null);
     setUnverifiedEmail(null);
     const response = await apiClient.post<AuthLoginResponse>("/api/auth/google", { idToken });
-    finishLogin(response.data.accessToken);
+    await finishLogin(response.data.accessToken);
   }, [finishLogin]);
 
   const verificationSucceeded = searchParams.get("verified") === "1";

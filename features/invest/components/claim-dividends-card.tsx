@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { CheckCircle2, ExternalLink, Gift, Loader2 } from "lucide-react";
 import {
   useAccount,
@@ -44,10 +45,14 @@ export function ClaimDividendsCard() {
   const { isLoading: txConfirming, isSuccess: txConfirmed } =
     useWaitForTransactionReceipt({ hash: txHash });
 
-  if (txConfirmed && txHash) {
-    void pending.refetch();
-    void queryClient.invalidateQueries({ queryKey: ["dividends"] });
-  }
+  // En useEffect: durante el render dispara un loop de refetch/invalidación.
+  useEffect(() => {
+    if (txConfirmed && txHash) {
+      void pending.refetch();
+      void queryClient.invalidateQueries({ queryKey: ["dividends"] });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [txConfirmed, txHash, queryClient]);
 
   function handleClaim() {
     writeContract({
@@ -96,8 +101,9 @@ export function ClaimDividendsCard() {
 
           {linked && !sameAccount && (
             <p className="text-xs text-yellow-600">
-              Conectaste una wallet distinta a la vinculada. El claim solo afecta a la wallet
-              conectada en MetaMask ahora mismo.
+              Conectaste una wallet distinta a la vinculada. Cambiá la cuenta activa
+              en MetaMask para reclamar: el monto pendiente que ves corresponde a la
+              wallet vinculada, no a la conectada.
             </p>
           )}
 
@@ -107,7 +113,10 @@ export function ClaimDividendsCard() {
               !isConnected ||
               isPending ||
               txConfirming ||
-              !hasSomething
+              !hasSomething ||
+              // El pendiente mostrado es de la wallet VINCULADA; firmar con otra
+              // wallet revierte con "DD: nothing to claim". Deshabilitar si difieren.
+              Boolean(linked && !sameAccount)
             }
             className="w-full gap-2"
             size="lg"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
@@ -38,6 +38,7 @@ import { ProtectedRoute } from "@/features/auth/components/protected-route"
 import { useSession } from "@/providers/session-provider"
 import { NotificationsDropdown } from "@/features/notifications/components/notifications-dropdown"
 import type { PermissionContext } from "@/features/auth/types/auth"
+import { KycBanner } from "@/features/kyc/components/kyc-banner"
 
 const navigation: {
   name: string
@@ -342,8 +343,12 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         </header>
 
         <main className="flex-1 overflow-auto p-4 lg:p-8">
+          <Suspense fallback={null}>
+            <KycBanner />
+          </Suspense>
           {children}
         </main>
+
       </div>
     </div>
   )

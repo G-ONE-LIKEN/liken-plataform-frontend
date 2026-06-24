@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -117,11 +117,15 @@ export function BuyLknFlow({ project }: { project: ProjectSummary }) {
     });
   }
 
-  // Cuando se confirma una tx (approve o buy), refrescar allowance y mis investments.
-  if (txConfirmed && txHash) {
-    queryClient.invalidateQueries({ queryKey: ["invest"] });
-    void refetchAllowance();
-  }
+  // Cuando se confirma una tx (approve o buy), refrescar allowance y mis
+  // investments. En useEffect: hacerlo durante el render dispara un loop de
+  // invalidaciones (invalidate → re-render → invalidate...).
+  useEffect(() => {
+    if (txConfirmed && txHash) {
+      queryClient.invalidateQueries({ queryKey: ["invest"] });
+      void refetchAllowance();
+    }
+  }, [txConfirmed, txHash, queryClient, refetchAllowance]);
 
   // ── Render según gate ────────────────────────────────────────────────────
   if (!canInvestStateWise) {
@@ -142,7 +146,10 @@ export function BuyLknFlow({ project }: { project: ProjectSummary }) {
       />
     );
   }
-  if (user?.kycStatus && user.kycStatus !== "APPROVED") {
+  // Gate estricto: si kycStatus es undefined (contexto fresco no cargado),
+  // se bloquea igual — fail-closed. El backend valida de todos modos, pero
+  // la UI no debe ofrecer el flow sin confirmación de KYC aprobado.
+  if (user?.kycStatus !== "APPROVED") {
     return (
       <GateMessage
         tone="danger"
