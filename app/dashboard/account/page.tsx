@@ -9,13 +9,7 @@ import { Label } from "@/components/ui/label"
 import { getPasswordStrength } from "@/shared/lib/password-strength"
 import { useSession } from "@/providers/session-provider"
 import { useChangePassword } from "@/features/auth/hooks/use-change-password"
-
-const KYC_CONFIG: Record<string, { label: string; className: string }> = {
-  NOT_STARTED: { label: "Sin iniciar", className: "bg-secondary text-muted-foreground" },
-  PENDING: { label: "En revision", className: "bg-accent/20 text-accent-foreground" },
-  APPROVED: { label: "Verificado", className: "bg-green-500/10 text-green-500" },
-  REJECTED: { label: "Rechazado", className: "bg-destructive/10 text-destructive" },
-}
+import { KycStatusCard } from "@/features/kyc/components/kyc-status-card"
 
 const TIER_CONFIG: Record<string, { label: string; className: string }> = {
   BASIC: { label: "Basico", className: "bg-secondary text-muted-foreground" },
@@ -156,6 +150,8 @@ export default function AccountPage() {
         </Card>
 
         <div className="space-y-6 lg:col-span-2">
+          <KycStatusCard />
+
           <Card className="bg-card">
             <CardHeader>
               <CardTitle>Informacion Personal</CardTitle>

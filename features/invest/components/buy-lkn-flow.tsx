@@ -25,6 +25,7 @@ import { CONTRACTS, TOKEN_DECIMALS, explorerTxUrl } from "@/features/web3/lib/co
 import { usePreviewInvestment } from "@/features/invest/hooks/use-investments";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "@/providers/session-provider";
+import { KycGate } from "@/features/kyc/components/kyc-gate";
 import { formatCurrency } from "@/shared/lib/utils";
 import type { ProjectSummary } from "@/features/projects/types/projects";
 
@@ -146,17 +147,11 @@ export function BuyLknFlow({ project }: { project: ProjectSummary }) {
       />
     );
   }
-  // Gate estricto: si kycStatus es undefined (contexto fresco no cargado),
-  // se bloquea igual — fail-closed. El backend valida de todos modos, pero
-  // la UI no debe ofrecer el flow sin confirmación de KYC aprobado.
+  // Gate estricto de KYC: fail-closed si no está APPROVED. El KycGate muestra
+  // el prompt acorde al estado (sin iniciar / en revisión / rechazado) con CTA
+  // para verificar o reintentar. El backend valida de todos modos.
   if (user?.kycStatus !== "APPROVED") {
-    return (
-      <GateMessage
-        tone="danger"
-        title="KYC pendiente"
-        description="Para invertir necesitás tener tu KYC aprobado."
-      />
-    );
+    return <KycGate reason="Para invertir en LIKEN necesitás verificar tu identidad." />;
   }
   if (!isConnected) {
     return (

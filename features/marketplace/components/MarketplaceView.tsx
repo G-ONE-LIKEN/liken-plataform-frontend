@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useOpenOrders, useBuyOrder, useCreateOrder } from "../hooks/useOrderBook";
+import { KycGate } from "@/features/kyc/components/kyc-gate";
+import { useKycGate } from "@/features/kyc/hooks/use-kyc-gate";
 import { ERC20_ABI } from "@/features/web3/lib/abis";
 import { CONTRACTS } from "@/features/web3/lib/contracts";
 import { env } from "@/shared/config/env";
@@ -31,6 +33,7 @@ export function MarketplaceView() {
   const { data: openOrders, isLoading: isLoadingOrders } = useOpenOrders(selectedProjectId);
   const buyOrderMutation = useBuyOrder();
   const createOrderMutation = useCreateOrder();
+  const { isApproved: isKycApproved } = useKycGate();
 
   const { data: hash, isPending: isApproving, writeContract } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
@@ -186,11 +189,12 @@ export function MarketplaceView() {
                 <div key={ask.id} className="flex justify-between py-1 text-sm items-center">
                   <span className="text-red-500">${ask.pricePerToken.toFixed(2)}</span>
                   <span className="text-muted-foreground">{ask.tokensAmount} LKN</span>
-                  <Button 
-                    size="sm" 
-                    className="h-6 text-xs bg-green-600 hover:bg-green-700" 
-                    onClick={() => handleBuy(ask)} 
-                    disabled={(activeAction === "buy" && selectedBuyOrder?.id === ask.id && (isApproving || isConfirming)) || buyOrderMutation.isPending}
+                  <Button
+                    size="sm"
+                    className="h-6 text-xs bg-green-600 hover:bg-green-700"
+                    onClick={() => handleBuy(ask)}
+                    disabled={!isKycApproved || (activeAction === "buy" && selectedBuyOrder?.id === ask.id && (isApproving || isConfirming)) || buyOrderMutation.isPending}
+                    title={!isKycApproved ? "Verificá tu identidad para operar" : undefined}
                   >
                     {activeAction === "buy" && selectedBuyOrder?.id === ask.id ? "Comprando..." : "Comprar"}
                   </Button>
@@ -209,6 +213,7 @@ export function MarketplaceView() {
         <Card className="bg-card lg:col-span-2">
           <CardHeader><CardTitle>Crear Orden de Venta</CardTitle></CardHeader>
           <CardContent className="space-y-4">
+            <KycGate reason="Para operar en el marketplace necesitás verificar tu identidad.">
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">Cantidad ({selectedToken?.symbol})</label>
               <Input type="number" placeholder="0.00" value={sellAmount} onChange={(e) => setSellAmount(e.target.value)} />
@@ -271,6 +276,7 @@ export function MarketplaceView() {
                  </Button>
                </div>
             )}
+            </KycGate>
           </CardContent>
         </Card>
 

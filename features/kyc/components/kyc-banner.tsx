@@ -3,28 +3,21 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, Clock, XCircle, AlertTriangle, X } from "lucide-react";
-import { useKyc } from "@/features/kyc/hooks/use-kyc";
-import type { KycStatus } from "@/features/kyc/types/kyc";
+import { useKycGate } from "@/features/kyc/hooks/use-kyc-gate";
 
 export function KycBanner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { getKycStatus } = useKyc();
-  const [status, setStatus] = useState<KycStatus | null>(null);
+  const { status, ready, pollUntilSettled } = useKycGate();
   const [dismissed, setDismissed] = useState(false);
 
-  useEffect(() => {
-    getKycStatus().then((result) => {
-      if (result) setStatus(result.status);
-    });
-  }, []);
-
+  // Al volver del widget de Didit (?kyc=done), el webhook puede tardar un
+  // par de segundos en impactar. Refrescamos el contexto con reintentos.
   useEffect(() => {
     if (searchParams.get("kyc") === "done") {
-      getKycStatus().then((result) => {
-        if (result) setStatus(result.status);
-      });
+      pollUntilSettled();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   // Banner APPROVED desaparece solo a los 5 segundos
@@ -35,7 +28,7 @@ export function KycBanner() {
     }
   }, [status]);
 
-  if (dismissed || status === null) return null;
+  if (dismissed || !ready) return null;
 
   const config = {
     APPROVED: {
