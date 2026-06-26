@@ -17,13 +17,16 @@ import { parseUnits, formatUnits } from "viem";
 import { toast } from "@/hooks/use-toast";
 
 
+// TODO: reemplazar este mock por la lista real de proyectos tradeables
+// (state OPEN + onChainStatus DEPLOYED) que expone project-service. Hoy esta
+// hardcodeado y por eso solo se puede operar sobre estos projectId fijos.
 const tokens = [
-  { projectId: 1, symbol: "LKN", name: "LIKEN Token", price: "$0.85", change: "+5.2%", trend: "up", volume: "$1.2M", marketCap: "$42M" },
+  { projectId: 4, symbol: "GWND", name: "Parque Good Winds", price: "$8.00", change: "+5.2%", trend: "up", volume: "$1.2M", marketCap: "$42M" },
   { projectId: 2, symbol: "LKN-SOL", name: "Solar Energy Token", price: "$1.25", change: "+3.8%", trend: "up", volume: "$890K", marketCap: "$28M" },
 ];
 
 export function MarketplaceView() {
-  const [selectedProjectId, setSelectedProjectId] = useState<number>(1);
+  const [selectedProjectId, setSelectedProjectId] = useState<number>(4);
   const [sellAmount, setSellAmount] = useState<string>("");
   const [sellPrice, setSellPrice] = useState<string>("");
   const [orderSubmitted, setOrderSubmitted] = useState<boolean>(false);
