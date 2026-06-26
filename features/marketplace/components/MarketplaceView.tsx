@@ -6,7 +6,8 @@ import { TrendingUp, TrendingDown, ArrowUpRight, Search, CheckCircle2 } from "lu
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useOpenOrders, useBuyOrder, useCreateOrder } from "../hooks/useOrderBook";
+import { useOpenOrders, useBuyOrder, useCreateOrder, useCancelOrder } from "../hooks/useOrderBook";
+import { useSession } from "@/providers/session-provider";
 import { KycGate } from "@/features/kyc/components/kyc-gate";
 import { useKycGate } from "@/features/kyc/hooks/use-kyc-gate";
 import { ERC20_ABI } from "@/features/web3/lib/abis";
@@ -29,10 +30,12 @@ export function MarketplaceView() {
   const [activeAction, setActiveAction] = useState<"sell" | "buy" | null>(null);
   const [selectedBuyOrder, setSelectedBuyOrder] = useState<any>(null);
   const { address } = useAccount();
+  const { user } = useSession();
 
   const { data: openOrders, isLoading: isLoadingOrders } = useOpenOrders(selectedProjectId);
   const buyOrderMutation = useBuyOrder();
   const createOrderMutation = useCreateOrder();
+  const cancelOrderMutation = useCancelOrder();
   const { isApproved: isKycApproved } = useKycGate();
 
   const { data: hash, isPending: isApproving, writeContract } = useWriteContract();
@@ -42,7 +45,7 @@ export function MarketplaceView() {
     if (!sellAmount || !sellPrice) return;
     setOrderSubmitted(false);
     setActiveAction("sell");
-    
+
     // 1. Approve LKN for LknMarketplace contract address
     const amountWei = parseUnits(sellAmount, 18);
     writeContract({
@@ -65,11 +68,11 @@ export function MarketplaceView() {
   const handleBuy = (order: any) => {
     setActiveAction("buy");
     setSelectedBuyOrder(order);
-    
+
     // Total USDC = tokensAmount * pricePerToken
     const totalUsdc = order.tokensAmount * order.pricePerToken;
     const amountUSDC6 = parseUnits(totalUsdc.toString(), 6);
-    
+
     writeContract({
       address: env.usdcAddress as `0x${string}`,
       abi: ERC20_ABI,
@@ -116,7 +119,7 @@ export function MarketplaceView() {
 
   // Split orders into Asks (Sell) and Bids (Buy)
   const asks = openOrders?.filter((o) => o.side === "SELL").sort((a, b) => a.pricePerToken - b.pricePerToken) || [];
-  const bids = openOrders?.filter((o) => o.side === "BUY").sort((a, b) => b.pricePerToken - a.pricePerToken) || [];
+  const myOrders = asks.filter((o) => o.sellerId === user?.id);
 
   return (
     <div className="space-y-8">
@@ -193,16 +196,23 @@ export function MarketplaceView() {
                     size="sm"
                     className="h-6 text-xs bg-green-600 hover:bg-green-700"
                     onClick={() => handleBuy(ask)}
-                    disabled={!isKycApproved || (activeAction === "buy" && selectedBuyOrder?.id === ask.id && (isApproving || isConfirming)) || buyOrderMutation.isPending}
+                    disabled={
+                      !isKycApproved ||
+                      ask.sellerId === user?.id ||
+                      (activeAction === "buy" && selectedBuyOrder?.id === ask.id && (isApproving || isConfirming)) ||
+                      buyOrderMutation.isPending
+                    }
                     title={!isKycApproved ? "Verificá tu identidad para operar" : undefined}
                   >
-                    {activeAction === "buy" && selectedBuyOrder?.id === ask.id ? "Comprando..." : "Comprar"}
+                    {ask.sellerId === user?.id 
+                      ? "Tu Orden" 
+                      : (activeAction === "buy" && selectedBuyOrder?.id === ask.id ? "Comprando..." : "Comprar")}
                   </Button>
                 </div>
               ))}
               {asks.length === 0 && !isLoadingOrders && <p className="text-sm text-muted-foreground italic">No hay órdenes de venta</p>}
             </div>
-            
+
             <div className="border-y border-border py-3 text-center">
               <p className="bg-gradient-to-r from-primary to-accent bg-clip-text text-lg font-bold text-transparent">{selectedToken?.price}</p>
               <p className="text-xs text-muted-foreground">Precio actual</p>
@@ -232,53 +242,99 @@ export function MarketplaceView() {
                 <span className="font-medium text-foreground">${((parseFloat(sellAmount || "0") * parseFloat(sellPrice || "0")) * 0.01).toFixed(2)}</span>
               </div>
             </div>
-            
-            <Button 
-              className="w-full" 
-              onClick={handleApproveAndSell} 
+
+            <Button
+              className="w-full"
+              onClick={handleApproveAndSell}
               disabled={isApproving || isConfirming || !sellAmount || !sellPrice || createOrderMutation.isPending}
             >
               {isApproving && activeAction === "sell" ? "Aprobando en Wallet..." : isConfirming && activeAction === "sell" ? "Confirmando Tx..." : "Vender (Aprobar on-chain primero)"}
             </Button>
-            
+
             {isConfirmed && activeAction === "sell" && !orderSubmitted && (
-               <div className="mt-4">
-                 <p className="text-sm text-green-500 flex items-center gap-1 mb-2"><CheckCircle2 className="w-4 h-4" /> Aprobado! Creando orden...</p>
-                 <Button 
-                    className="w-full" 
-                    onClick={() => {
-                      createOrderMutation.mutate({
-                        projectId: selectedProjectId,
-                        tokensAmount: parseFloat(sellAmount),
-                        pricePerToken: parseFloat(sellPrice)
-                      }, {
-                        onSuccess: () => {
-                          toast({
-                            title: "Orden creada exitosamente",
-                            description: `Se publicó tu orden de venta por ${sellAmount} LKN a $${sellPrice} c/u.`,
-                          });
-                          setSellAmount("");
-                          setSellPrice("");
-                          setOrderSubmitted(true);
-                        },
-                        onError: (err: any) => {
-                          toast({
-                            title: "Error al crear la orden",
-                            description: err instanceof Error ? err.message : "Intente nuevamente.",
-                            variant: "destructive"
-                          });
-                        }
-                      })
-                    }}
-                    disabled={createOrderMutation.isPending}
-                 >
-                    {createOrderMutation.isPending ? "Creando..." : "Confirmar Orden en Marketplace"}
-                 </Button>
-               </div>
+              <div className="mt-4">
+                <p className="text-sm text-green-500 flex items-center gap-1 mb-2"><CheckCircle2 className="w-4 h-4" /> Aprobado! Creando orden...</p>
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    createOrderMutation.mutate({
+                      projectId: selectedProjectId,
+                      tokensAmount: parseFloat(sellAmount),
+                      pricePerToken: parseFloat(sellPrice)
+                    }, {
+                      onSuccess: () => {
+                        toast({
+                          title: "Orden creada exitosamente",
+                          description: `Se publicó tu orden de venta por ${sellAmount} LKN a $${sellPrice} c/u.`,
+                        });
+                        setSellAmount("");
+                        setSellPrice("");
+                        setOrderSubmitted(true);
+                      },
+                      onError: (err: any) => {
+                        toast({
+                          title: "Error al crear la orden",
+                          description: err instanceof Error ? err.message : "Intente nuevamente.",
+                          variant: "destructive"
+                        });
+                      }
+                    })
+                  }}
+                  disabled={createOrderMutation.isPending}
+                >
+                  {createOrderMutation.isPending ? "Creando..." : "Confirmar Orden en Marketplace"}
+                </Button>
+              </div>
             )}
             </KycGate>
           </CardContent>
         </Card>
+
+        {myOrders.length > 0 && (
+          <Card className="bg-card lg:col-span-3 border-primary/20">
+            <CardHeader><CardTitle>Mis Órdenes Activas</CardTitle></CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted-foreground">
+                      <th className="pb-2 font-medium">Cantidad</th>
+                      <th className="pb-2 font-medium">Precio Unitario</th>
+                      <th className="pb-2 font-medium">Total</th>
+                      <th className="pb-2 font-medium text-right">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {myOrders.map((order) => (
+                      <tr key={order.id}>
+                        <td className="py-3 font-medium">{order.tokensAmount} LKN</td>
+                        <td className="py-3">${order.pricePerToken.toFixed(2)}</td>
+                        <td className="py-3">${(order.tokensAmount * order.pricePerToken).toFixed(2)}</td>
+                        <td className="py-3 text-right">
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            className="h-8 text-xs"
+                            onClick={() => {
+                              cancelOrderMutation.mutate(order.id, {
+                                onSuccess: () => {
+                                  toast({ title: "Orden cancelada", description: "Tu orden ha sido removida del libro de ofertas." });
+                                }
+                              });
+                            }}
+                            disabled={cancelOrderMutation.isPending}
+                          >
+                            {cancelOrderMutation.isPending ? "Cancelando..." : "Cancelar"}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
       </div>
     </div>

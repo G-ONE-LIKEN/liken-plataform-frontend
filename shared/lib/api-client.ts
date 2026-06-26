@@ -26,25 +26,20 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
 };
 
-const SESSION_TOKEN_KEY = "liken.session.token";
+let memoryToken: string | null = null;
 
-function readCookieToken() {
-  if (typeof document === "undefined") return null;
-  const entry = document.cookie
-    .split("; ")
-    .find((cookie) => cookie.startsWith("liken_session_token="));
-  return entry ? decodeURIComponent(entry.split("=").slice(1).join("=")) : null;
+export function getStoredToken(): string | null {
+  return memoryToken;
 }
 
-function getStoredToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(SESSION_TOKEN_KEY) ?? readCookieToken();
+export function setStoredToken(token: string | null) {
+  memoryToken = token;
 }
 
 let isRefreshing = false;
 let refreshQueue: Array<(token: string | null) => void> = [];
 
-async function attemptRefresh(): Promise<string | null> {
+export async function attemptRefresh(): Promise<string | null> {
   if (isRefreshing) {
     return new Promise((resolve) => {
       refreshQueue.push(resolve);
@@ -68,7 +63,7 @@ async function attemptRefresh(): Promise<string | null> {
     const newToken: string | null = body?.data?.accessToken ?? null;
 
     if (newToken) {
-      window.localStorage.setItem(SESSION_TOKEN_KEY, newToken);
+      setStoredToken(newToken);
       window.dispatchEvent(new Event("auth:session-changed"));
     }
 
@@ -111,7 +106,7 @@ async function request<T>(
 
   const hasSessionToken = Boolean(token);
 
-  if (response.status === 401 && !isRetry && hasSessionToken) {
+  if (response.status === 401 && !isRetry) {
     const newToken = await attemptRefresh();
     if (newToken) {
       return request<T>(path, options, true);
@@ -122,7 +117,7 @@ async function request<T>(
     throw new UnauthorizedError(payload?.message ?? "No autorizado", payload?.code);
   }
 
-  if (response.status === 401 && isRetry && hasSessionToken) {
+  if (response.status === 401 && isRetry) {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("auth:unauthorized"));
     }

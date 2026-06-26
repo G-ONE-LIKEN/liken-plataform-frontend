@@ -23,7 +23,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Web3Provider } from "@/features/web3/components/web3-provider"
 import { WalletStatusCard } from "@/features/web3/components/wallet-status-card"
 import { ERC20_ABI } from "@/features/web3/lib/abis"
-import { useWallet, useWalletMovements, useDeposit, useWithdraw } from "@/features/wallet/hooks/use-wallet"
+import { useWallet, useWalletMovements, useDeposit, useWithdraw, useMyHoldings } from "@/features/wallet/hooks/use-wallet"
+import { useMyOrders } from "@/features/marketplace/hooks/useOrderBook"
 import { ClaimDividendsCard } from "@/features/invest/components/claim-dividends-card"
 import { InvestmentHistory } from "@/features/invest/components/investment-history"
 import { DividendHistory } from "@/features/invest/components/dividend-history"
@@ -128,6 +129,8 @@ export default function WalletPage() {
   const { address: connectedAddress } = useAccount()
   const walletQuery = useWallet()
   const movementsQuery = useWalletMovements()
+  const holdingsQuery = useMyHoldings()
+  const ordersQuery = useMyOrders()
   const deposit = useDeposit()
   const withdraw = useWithdraw()
 
@@ -138,6 +141,13 @@ export default function WalletPage() {
 
   const wallet = walletQuery.data
   const movements = movementsQuery.data?.content ?? []
+  
+  // Calculate LKN totals
+  const totalLkn = holdingsQuery.data?.reduce((sum, h) => sum + h.tokensAmount, 0) || 0
+  const reservedLkn = ordersQuery.data?.filter(o => o.status === "OPEN" || o.status === "PENDING_SETTLEMENT")
+                                       .reduce((sum, o) => sum + o.tokensAmount, 0) || 0
+  const availableLkn = totalLkn - reservedLkn
+
   const holderAddress = (user?.walletAddress ?? connectedAddress ?? null) as `0x${string}` | null
 
   async function handleDeposit() {
@@ -196,7 +206,8 @@ export default function WalletPage() {
           <Wallet className="h-4 w-4" /> Cuenta en el sistema
         </h2>
         <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="relative overflow-hidden bg-gradient-to-br from-primary/20 to-background lg:col-span-2">
+          {/* USDC Balance Card */}
+          <Card className="relative overflow-hidden bg-gradient-to-br from-primary/20 to-background">
             <div aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
             <div
               aria-hidden
@@ -204,16 +215,47 @@ export default function WalletPage() {
               style={{ background: "radial-gradient(circle, oklch(0.80 0.12 85 / 0.30), transparent 70%)" }}
             />
             <CardContent className="relative p-6">
-              <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_0_30px_-6px_oklch(0.72_0.16_165/0.85)]">
-                  <Wallet className="h-8 w-8" />
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_0_20px_-6px_oklch(0.72_0.16_165/0.85)]">
+                    <DollarSign className="h-5 w-5" />
+                  </div>
+                  <p className="text-sm font-medium text-muted-foreground">Balance (USD)</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Balance disponible ({wallet?.currency ?? "USD"})</p>
                   {walletQuery.isLoading ? (
-                    <Skeleton className="mt-1 h-10 w-36" />
+                    <Skeleton className="mt-1 h-8 w-28" />
                   ) : (
-                    <p className="bg-gradient-to-r from-primary to-accent bg-clip-text text-4xl font-bold text-transparent">{formatBalance(wallet?.balance)}</p>
+                    <p className="bg-gradient-to-r from-primary to-accent bg-clip-text text-3xl font-bold text-transparent">{formatBalance(wallet?.balance)}</p>
+                  )}
+                  <p className="mt-1 text-xs text-muted-foreground">Disponible para invertir o retirar</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* LKN Internal Balance Card */}
+          <Card className="relative overflow-hidden bg-secondary/30">
+            <CardContent className="relative p-6">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-foreground shadow-[0_0_20px_-6px_oklch(0.50_0.20_260/0.85)]">
+                    <Zap className="h-5 w-5" />
+                  </div>
+                  <p className="text-sm font-medium text-muted-foreground">Tokens LKN (Sistema)</p>
+                </div>
+                <div>
+                  {holdingsQuery.isLoading || ordersQuery.isLoading ? (
+                    <Skeleton className="mt-1 h-8 w-28" />
+                  ) : (
+                    <div className="space-y-1">
+                      <p className="text-3xl font-bold text-foreground">{totalLkn.toFixed(2)} LKN</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="text-green-500 font-medium">{availableLkn.toFixed(2)} Disp.</span>
+                        <span>•</span>
+                        <span className="text-orange-500 font-medium">{reservedLkn.toFixed(2)} Reserv.</span>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

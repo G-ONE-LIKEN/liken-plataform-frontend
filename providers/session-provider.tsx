@@ -14,10 +14,8 @@ import { useRouter } from "next/navigation";
 import { getPermissionContext, parseSessionToken } from "@/features/auth/lib/session";
 import type { PermissionContext, SessionUser } from "@/features/auth/types/auth";
 import { env } from "@/shared/config/env";
+import { attemptRefresh, getStoredToken, setStoredToken } from "@/shared/lib/api-client";
 
-
-const SESSION_TOKEN_KEY = "liken.session.token";
-const SESSION_TOKEN_COOKIE = "liken_session_token";
 const SESSION_EVENT = "auth:session-changed";
 
 type SessionContextValue = {
@@ -33,37 +31,11 @@ type SessionContextValue = {
 
 const SessionContext = createContext<SessionContextValue | undefined>(undefined);
 
-function readCookieToken() {
-  if (typeof document === "undefined") return null;
-  const entry = document.cookie
-    .split("; ")
-    .find((cookie) => cookie.startsWith(`${SESSION_TOKEN_COOKIE}=`));
-  return entry ? decodeURIComponent(entry.split("=").slice(1).join("=")) : null;
-}
-
-function writeCookieToken(token: string) {
-  document.cookie = `${SESSION_TOKEN_COOKIE}=${encodeURIComponent(token)}; path=/; SameSite=Lax`;
-}
-
-function clearCookieToken() {
-  document.cookie = `${SESSION_TOKEN_COOKIE}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
-}
-
-function readStoredToken() {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(SESSION_TOKEN_KEY) ?? readCookieToken();
-}
-
 function subscribe(callback: () => void) {
   if (typeof window === "undefined") return () => undefined;
-  const handleStorage = (event: StorageEvent) => {
-    if (event.key === SESSION_TOKEN_KEY) callback();
-  };
   const handleSessionChange = () => callback();
-  window.addEventListener("storage", handleStorage);
   window.addEventListener(SESSION_EVENT, handleSessionChange);
   return () => {
-    window.removeEventListener("storage", handleStorage);
     window.removeEventListener(SESSION_EVENT, handleSessionChange);
   };
 }
@@ -76,16 +48,27 @@ function emitSessionChanged() {
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const token = useSyncExternalStore(subscribe, readStoredToken, () => null);
+  const token = useSyncExternalStore(subscribe, getStoredToken, () => null);
   const [freshUser, setFreshUser] = useState<SessionUser | null>(null);
   const fetchingRef = useRef(false);
   // En SSR/primer render client, useSyncExternalStore reporta el server snapshot (null)
   // antes de leer localStorage. Sin un flag de hidratación, ProtectedRoute ve
   // isAuthenticated=false durante un tick y redirige al login. Esperamos al mount
   // para reportar el estado real.
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [isResolving, setIsResolving] = useState(true);
+
   useEffect(() => {
-    setIsHydrated(true);
+    const initSession = async () => {
+      if (!getStoredToken()) {
+        try {
+          await attemptRefresh();
+        } catch {
+          // ignore
+        }
+      }
+      setIsResolving(false);
+    };
+    initSession();
   }, []);
 
   const jwtUser = useMemo<SessionUser | null>(() => {
@@ -100,8 +83,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   // Cleanup invalid token outside of render phase
   useEffect(() => {
     if (token && !jwtUser) {
-      window.localStorage.removeItem(SESSION_TOKEN_KEY);
-      clearCookieToken();
+      setStoredToken(null);
       emitSessionChanged();
     }
   }, [token, jwtUser]);
@@ -155,8 +137,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleUnauthorized = () => {
       if (typeof window !== "undefined") {
-        window.localStorage.removeItem(SESSION_TOKEN_KEY);
-        clearCookieToken();
+        setStoredToken(null);
         emitSessionChanged();
       }
       router.push("/login");
@@ -166,8 +147,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const login = useCallback((nextToken: string) => {
-    window.localStorage.setItem(SESSION_TOKEN_KEY, nextToken);
-    writeCookieToken(nextToken);
+    setStoredToken(nextToken);
     setFreshUser(null);
     emitSessionChanged();
   }, []);
@@ -181,8 +161,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // best-effort — clear local state regardless
     }
-    window.localStorage.removeItem(SESSION_TOKEN_KEY);
-    clearCookieToken();
+    setStoredToken(null);
     setFreshUser(null);
     emitSessionChanged();
     router.push("/login");
@@ -212,12 +191,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       user,
       permissions: getPermissionContext(user),
       isAuthenticated: Boolean(token && jwtUser),
-      isLoading: !isHydrated,
+      isLoading: isResolving,
       login,
       logout,
       refreshContext,
     }),
-    [token, user, jwtUser, login, logout, refreshContext, isHydrated],
+    [token, user, jwtUser, login, logout, refreshContext, isResolving],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

@@ -5,7 +5,7 @@ export interface OrderResponse {
   side: "SELL" | "BUY";
   tokensAmount: number;
   pricePerToken: number;
-  status: "OPEN" | "MATCHED" | "CANCELLED" | "EXPIRED";
+  status: "OPEN" | "PENDING_SETTLEMENT" | "MATCHED" | "CANCELLED" | "EXPIRED";
   createdAt: string;
   expiresAt: string;
 }
