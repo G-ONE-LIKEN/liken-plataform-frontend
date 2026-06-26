@@ -109,7 +109,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { user, permissions, logout } = useSession()
+  const { user, permissions, logout, isLoading } = useSession()
 
   const displayName = user?.email?.split("@")[0] ?? "Usuario"
 
@@ -118,8 +118,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   //   - no-admin entrando a rutas de admin (users, /admin/*) → /dashboard
   // Cualquiera de los dos casos: redirigimos al panel principal.
   const shouldRedirect =
-    (permissions.isAdmin && matchesAnyPrefix(pathname, ADMIN_BLOCKED_PREFIXES)) ||
-    (!permissions.isAdmin && matchesAnyPrefix(pathname, NON_ADMIN_BLOCKED_PREFIXES))
+    !isLoading &&
+    ((permissions.isAdmin && matchesAnyPrefix(pathname, ADMIN_BLOCKED_PREFIXES)) ||
+    (!permissions.isAdmin && matchesAnyPrefix(pathname, NON_ADMIN_BLOCKED_PREFIXES)))
 
   useEffect(() => {
     if (shouldRedirect) {
