@@ -101,6 +101,7 @@ export function LoginForm() {
   }, [finishLogin]);
 
   const verificationSucceeded = searchParams.get("verified") === "1";
+  const passwordResetSucceeded = searchParams.get("reset") === "1";
 
   return (
     <div className="relative w-full max-w-md">
@@ -143,6 +144,13 @@ export function LoginForm() {
               </div>
             )}
 
+            {passwordResetSucceeded && (
+              <div className="flex items-center gap-3 rounded-xl border border-[rgba(38,116,88,0.3)] bg-[rgba(38,116,88,0.08)] px-4 py-3 text-sm text-[var(--color-success)]">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                Contrasena actualizada. Ya puedes iniciar sesion.
+              </div>
+            )}
+
             <Input
               label="Email"
               type="email"
@@ -174,9 +182,11 @@ export function LoginForm() {
                 }
               />
               <div className="text-right">
-                <span className="cursor-not-allowed select-none text-xs text-[var(--color-foreground-subtle)]">
+                 <Link
+                  href="/forgot-password"
+                  className="text-xs text-[var(--color-foreground-subtle)] hover:text-[var(--color-foreground)] transition-colors">
                   Olvidaste tu contrasena?
-                </span>
+                 </Link>
               </div>
             </div>
             {serverError && (
