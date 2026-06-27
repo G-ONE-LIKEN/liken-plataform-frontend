@@ -53,6 +53,8 @@ jobs:
             --build-arg NEXT_PUBLIC_REGISTRY_ADDRESS=${{ vars.NEXT_PUBLIC_REGISTRY_ADDRESS }} \
             --build-arg NEXT_PUBLIC_DISTRIBUTOR_ADDRESS=${{ vars.NEXT_PUBLIC_DISTRIBUTOR_ADDRESS }} \
             --build-arg NEXT_PUBLIC_USDC_ADDRESS=${{ vars.NEXT_PUBLIC_USDC_ADDRESS }} \
+            --build-arg NEXT_PUBLIC_MARKETPLACE_ADDRESS=${{ vars.NEXT_PUBLIC_MARKETPLACE_ADDRESS }} \
+            --build-arg NEXT_PUBLIC_PLATFORM_ADMIN_ADDRESS=${{ vars.NEXT_PUBLIC_PLATFORM_ADMIN_ADDRESS }} \
             --build-arg NEXT_PUBLIC_CHAIN_ID=${{ vars.NEXT_PUBLIC_CHAIN_ID }} \
             --build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }} \
             -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/frontend:${{ env.IMAGE_TAG }} \
