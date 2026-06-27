@@ -1,41 +1,77 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { TrendingUp, TrendingDown, ArrowUpRight, Search, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useOpenOrders, useBuyOrder, useCreateOrder, useCancelOrder } from "../hooks/useOrderBook";
+import { useProjectsByState } from "@/features/projects/hooks/use-projects";
 import { useSession } from "@/providers/session-provider";
 import { KycGate } from "@/features/kyc/components/kyc-gate";
 import { useKycGate } from "@/features/kyc/hooks/use-kyc-gate";
 import { ERC20_ABI } from "@/features/web3/lib/abis";
 import { CONTRACTS } from "@/features/web3/lib/contracts";
 import { env } from "@/shared/config/env";
-import { parseUnits, formatUnits } from "viem";
+import { parseUnits } from "viem";
 import { toast } from "@/hooks/use-toast";
 
-
-// TODO: reemplazar este mock por la lista real de proyectos tradeables
-// (state OPEN + onChainStatus DEPLOYED) que expone project-service. Hoy esta
-// hardcodeado y por eso solo se puede operar sobre estos projectId fijos.
-const tokens = [
-  { projectId: 4, symbol: "GWND", name: "Parque Good Winds", price: "$8.00", change: "+5.2%", trend: "up", volume: "$1.2M", marketCap: "$42M" },
-  { projectId: 2, symbol: "LKN-SOL", name: "Solar Energy Token", price: "$1.25", change: "+3.8%", trend: "up", volume: "$890K", marketCap: "$28M" },
-];
+/**
+ * Genera un símbolo a partir del nombre del proyecto:
+ * "Parque Good Winds" -> "PGW", "Mini Hidro Neuquén" -> "MHN".
+ * Toma las primeras letras de cada palabra (max 4 chars).
+ */
+function symbolFromName(name: string): string {
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+  return initials.slice(0, 4) || name.slice(0, 4).toUpperCase();
+}
 
 export function MarketplaceView() {
-  const [selectedProjectId, setSelectedProjectId] = useState<number>(4);
+  // Lista dinámica de proyectos tradeables: state=OPEN + onChainStatus=DEPLOYED.
+  // Antes esto era un array hardcodeado y nuevos proyectos no aparecían acá
+  // hasta que alguien tocara el código.
+  const { data: projectsPage, isLoading: isLoadingProjects } = useProjectsByState("OPEN", 50);
+  const tokens = (projectsPage?.content ?? [])
+    .filter((p) => p.onChainStatus === "DEPLOYED" && p.offeringContractAddress)
+    .map((p) => ({
+      projectId: p.id,
+      symbol: symbolFromName(p.name),
+      name: p.name,
+      price: `$${Number(p.currentPrice ?? p.earlyBirdPrice ?? 0).toFixed(2)}`,
+      change: "+0.0%",
+      trend: "up" as const,
+      volume: "—",
+      marketCap: "—",
+    }));
+
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+
+  // Si no hay selección y ya cargaron proyectos, seleccionar el primero por default.
+  useEffect(() => {
+    if (selectedProjectId === null && tokens.length > 0) {
+      setSelectedProjectId(tokens[0].projectId);
+    }
+  }, [selectedProjectId, tokens]);
   const [sellAmount, setSellAmount] = useState<string>("");
   const [sellPrice, setSellPrice] = useState<string>("");
   const [orderSubmitted, setOrderSubmitted] = useState<boolean>(false);
   const [activeAction, setActiveAction] = useState<"sell" | "buy" | null>(null);
   const [selectedBuyOrder, setSelectedBuyOrder] = useState<any>(null);
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const { user } = useSession();
+  const linkedAddress = user?.walletAddress ?? null;
+  const hasLinkedWallet = Boolean(linkedAddress);
+  const sameAccount =
+    hasLinkedWallet &&
+    isConnected &&
+    address?.toLowerCase() === linkedAddress?.toLowerCase();
 
-  const { data: openOrders, isLoading: isLoadingOrders } = useOpenOrders(selectedProjectId);
+  const { data: openOrders, isLoading: isLoadingOrders } = useOpenOrders(selectedProjectId ?? undefined);
   const buyOrderMutation = useBuyOrder();
   const createOrderMutation = useCreateOrder();
   const cancelOrderMutation = useCancelOrder();
@@ -44,8 +80,51 @@ export function MarketplaceView() {
   const { data: hash, isPending: isApproving, writeContract } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
+  const { data: usdcBalance } = useReadContract({
+    address: env.usdcAddress as `0x${string}`,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: { enabled: Boolean(address) },
+  });
+
+  const { data: lknBalance } = useReadContract({
+    address: CONTRACTS.linkenToken,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: { enabled: Boolean(address) },
+  });
+
+  const sellAmountRaw = (() => {
+    try {
+      return sellAmount ? parseUnits(sellAmount, 18) : 0n;
+    } catch {
+      return 0n;
+    }
+  })();
+
+  const hasEnoughLknForSell =
+    typeof lknBalance === "bigint" ? lknBalance >= sellAmountRaw : true;
+
   const handleApproveAndSell = () => {
     if (!sellAmount || !sellPrice) return;
+    if (!sameAccount) {
+      toast({
+        title: "Cuenta de MetaMask distinta",
+        description: "Cambiá la cuenta activa en MetaMask para que coincida con la wallet vinculada a tu cuenta.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!hasEnoughLknForSell) {
+      toast({
+        title: "Saldo insuficiente",
+        description: "No tenés suficiente LKN en la wallet conectada para publicar esta orden.",
+        variant: "destructive",
+      });
+      return;
+    }
     setOrderSubmitted(false);
     setActiveAction("sell");
 
@@ -69,6 +148,22 @@ export function MarketplaceView() {
   };
 
   const handleBuy = (order: any) => {
+    if (!sameAccount) {
+      toast({
+        title: "Cuenta de MetaMask distinta",
+        description: "Cambiá la cuenta activa en MetaMask para que coincida con la wallet vinculada a tu cuenta.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!hasEnoughUsdcForOrder(order)) {
+      toast({
+        title: "Saldo insuficiente",
+        description: "No tenés suficiente USDC en la wallet conectada para liquidar esta compra.",
+        variant: "destructive",
+      });
+      return;
+    }
     setActiveAction("buy");
     setSelectedBuyOrder(order);
 
@@ -99,8 +194,8 @@ export function MarketplaceView() {
       buyOrderMutation.mutate(selectedBuyOrder.id, {
         onSuccess: () => {
           toast({
-            title: "Compra iniciada exitosamente",
-            description: "Aprobación de USDC confirmada. El backend está liquidando el intercambio on-chain.",
+            title: "Liquidación iniciada",
+            description: "La aprobación quedó confirmada. La compra sigue pendiente hasta que la liquidación on-chain termine bien.",
           });
           setActiveAction(null);
           setSelectedBuyOrder(null);
@@ -119,6 +214,22 @@ export function MarketplaceView() {
   }, [isConfirmed, activeAction, selectedBuyOrder]);
 
   const selectedToken = tokens.find((t) => t.projectId === selectedProjectId);
+  const hasEnoughUsdcForOrder = (order: any) => {
+    if (typeof usdcBalance !== "bigint") return true;
+    const total = parseUnits((order.tokensAmount * order.pricePerToken).toFixed(6), 6);
+    return usdcBalance >= total;
+  };
+  const getBuyDisabledReason = (order: any) => {
+    if (!isKycApproved) return "Verificá tu identidad para operar";
+    if (!sameAccount) return "Conectá la wallet vinculada a tu cuenta para comprar";
+    if (!hasEnoughUsdcForOrder(order)) return "No tenés suficiente USDC para liquidar esta compra";
+    return undefined;
+  };
+  const sellDisabledReason = !sameAccount
+    ? "Conectá la wallet vinculada a tu cuenta para vender"
+    : !hasEnoughLknForSell
+      ? "No tenés suficiente LKN en la wallet conectada para publicar esta orden"
+      : undefined;
 
   // Split orders into Asks (Sell) and Bids (Buy)
   const asks = openOrders?.filter((o) => o.side === "SELL").sort((a, b) => a.pricePerToken - b.pricePerToken) || [];
@@ -158,6 +269,18 @@ export function MarketplaceView() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
+                {isLoadingProjects && (
+                  <tr className="text-sm">
+                    <td colSpan={5} className="py-6 text-center text-muted-foreground">Cargando proyectos…</td>
+                  </tr>
+                )}
+                {!isLoadingProjects && tokens.length === 0 && (
+                  <tr className="text-sm">
+                    <td colSpan={5} className="py-6 text-center text-muted-foreground">
+                      No hay proyectos tradeables todavía. Publicá un proyecto on-chain para que aparezca acá.
+                    </td>
+                  </tr>
+                )}
                 {tokens.map((token) => (
                   <tr key={token.symbol} className="text-sm cursor-pointer hover:bg-secondary/20" onClick={() => setSelectedProjectId(token.projectId)}>
                     <td className="py-4">
@@ -201,11 +324,13 @@ export function MarketplaceView() {
                     onClick={() => handleBuy(ask)}
                     disabled={
                       !isKycApproved ||
+                      !sameAccount ||
+                      !hasEnoughUsdcForOrder(ask) ||
                       ask.sellerId === user?.id ||
                       (activeAction === "buy" && selectedBuyOrder?.id === ask.id && (isApproving || isConfirming)) ||
                       buyOrderMutation.isPending
                     }
-                    title={!isKycApproved ? "Verificá tu identidad para operar" : undefined}
+                    title={getBuyDisabledReason(ask)}
                   >
                     {ask.sellerId === user?.id 
                       ? "Tu Orden" 
@@ -227,6 +352,16 @@ export function MarketplaceView() {
           <CardHeader><CardTitle>Crear Orden de Venta</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <KycGate reason="Para operar en el marketplace necesitás verificar tu identidad.">
+            {!sameAccount && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-100">
+                Conectá en MetaMask la misma wallet que tenés vinculada en tu cuenta para poder publicar órdenes.
+              </div>
+            )}
+            {sameAccount && !hasEnoughLknForSell && Boolean(sellAmount) && (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                No tenés suficiente LKN en la wallet conectada para vender esa cantidad.
+              </div>
+            )}
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">Cantidad ({selectedToken?.symbol})</label>
               <Input type="number" placeholder="0.00" value={sellAmount} onChange={(e) => setSellAmount(e.target.value)} />
@@ -249,7 +384,16 @@ export function MarketplaceView() {
             <Button
               className="w-full"
               onClick={handleApproveAndSell}
-              disabled={isApproving || isConfirming || !sellAmount || !sellPrice || createOrderMutation.isPending}
+              disabled={
+                isApproving ||
+                isConfirming ||
+                !sellAmount ||
+                !sellPrice ||
+                createOrderMutation.isPending ||
+                !sameAccount ||
+                !hasEnoughLknForSell
+              }
+              title={sellDisabledReason}
             >
               {isApproving && activeAction === "sell" ? "Aprobando en Wallet..." : isConfirming && activeAction === "sell" ? "Confirmando Tx..." : "Vender (Aprobar on-chain primero)"}
             </Button>
@@ -260,6 +404,7 @@ export function MarketplaceView() {
                 <Button
                   className="w-full"
                   onClick={() => {
+                    if (selectedProjectId === null) return;
                     createOrderMutation.mutate({
                       projectId: selectedProjectId,
                       tokensAmount: parseFloat(sellAmount),
@@ -283,7 +428,8 @@ export function MarketplaceView() {
                       }
                     })
                   }}
-                  disabled={createOrderMutation.isPending}
+                  disabled={createOrderMutation.isPending || !sameAccount || !hasEnoughLknForSell}
+                  title={sellDisabledReason}
                 >
                   {createOrderMutation.isPending ? "Creando..." : "Confirmar Orden en Marketplace"}
                 </Button>

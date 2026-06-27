@@ -1,13 +1,14 @@
 "use client";
 
-import { useAccount, useChainId, useBalance } from "wagmi";
+import { useAccount, useBalance, useChainId } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { formatUnits } from "viem";
-import { formatCompactAddress } from "@/shared/lib/utils";
+import { Wallet } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
-import { Card } from "@/shared/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LinkWalletButton } from "@/features/web3/components/link-wallet-button";
+import { formatCompactAddress } from "@/shared/lib/utils";
 
 export function WalletStatusCard() {
   const { address, chain, isConnected } = useAccount();
@@ -27,54 +28,62 @@ export function WalletStatusCard() {
     : null;
 
   return (
-    <Card
-      title="Mi wallet blockchain"
-      description="Saldo y estado de tu wallet de MetaMask conectada a Sepolia."
-      actions={
-        <Badge tone={isWrongNetwork ? "danger" : isConnected ? "success" : "neutral"}>
-          {isWrongNetwork ? "Wrong network" : isConnected ? "Conectada" : "Desconectada"}
-        </Badge>
-      }
-    >
-      <div className="grid gap-4">
-        {/* ETH Balance highlight */}
-        {isConnected && (
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-4">
-            <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-foreground-subtle)]">
-              Saldo ETH
-            </p>
-            {ethLoading ? (
-              <Skeleton className="mt-1 h-8 w-32" />
-            ) : (
-              <p className="mt-1 text-3xl font-bold text-[var(--color-foreground)]">
-                {formattedEth} <span className="text-lg font-medium text-[var(--color-foreground-muted)]">ETH</span>
-              </p>
-            )}
+    <Card className="h-full overflow-hidden bg-card">
+      <CardContent className="p-0">
+        <div className="p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                <Wallet className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Mi wallet blockchain</p>
+                <p className="text-xs text-muted-foreground">Saldo y estado de tu wallet de MetaMask conectada a Sepolia.</p>
+              </div>
+            </div>
+            <Badge tone={isWrongNetwork ? "danger" : isConnected ? "success" : "neutral"}>
+              {isWrongNetwork ? "Wrong network" : isConnected ? "Conectada" : "Desconectada"}
+            </Badge>
           </div>
-        )}
 
-        {/* Details */}
-        <div className="grid gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-4 text-sm text-[var(--color-foreground-muted)]">
-          <Row label="Address" value={formatCompactAddress(address)} />
-          <Row label="Red" value={chain?.name ?? "Sin red"} />
-        </div>
+          <div className="mt-5 grid gap-4">
+            {isConnected && (
+              <div className="rounded-2xl border border-border/60 bg-secondary/40 px-4 py-4">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Saldo ETH
+                </p>
+                {ethLoading ? (
+                  <Skeleton className="mt-1 h-8 w-32" />
+                ) : (
+                  <p className="mt-1 text-3xl font-bold text-foreground">
+                    {formattedEth} <span className="text-lg font-medium text-muted-foreground">ETH</span>
+                  </p>
+                )}
+              </div>
+            )}
 
-        {/* Vínculo wallet ↔ cuenta Liken (Fase 1 backend).
-            Detecta los 4 estados: no conectada, conectada-sin-vincular,
-            vinculada-y-coincide, vinculada-con-mismatch. */}
-        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-4">
-          <LinkWalletButton />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <InfoTile label="Address" value={formatCompactAddress(address)} />
+              <InfoTile label="Red" value={chain?.name ?? "Sin red"} />
+            </div>
+
+            <div className="rounded-xl border border-border/60 bg-secondary/40 px-4 py-4">
+              <LinkWalletButton />
+            </div>
+          </div>
         </div>
-      </div>
+      </CardContent>
     </Card>
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function InfoTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <span>{label}</span>
-      <span className="font-semibold text-[var(--color-foreground)]">{value}</span>
+    <div className="rounded-xl border border-border/60 bg-secondary/40 px-4 py-4">
+      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-2 text-sm font-semibold text-foreground">{value}</p>
     </div>
   );
 }

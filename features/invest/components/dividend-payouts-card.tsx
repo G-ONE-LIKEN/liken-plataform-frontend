@@ -9,9 +9,10 @@ import { explorerTxUrl } from "@/features/web3/lib/contracts";
 import { formatCurrency } from "@/shared/lib/utils";
 
 /**
- * Card de pagos de dividendos automaticos (flujo nuevo — transfer directo USDC
- * desde el signer admin). El holder NO firma nada: los USDC llegan solos a su
- * MetaMask cuando el oracle dispara un batch para el proyecto.
+ * Historial de pagos de dividendos acreditados a la wallet del usuario.
+ *
+ * No representa un claim pendiente en contrato, sino transferencias ya
+ * registradas por el backend para la cuenta autenticada.
  */
 export function DividendPayoutsCard() {
   const payouts = useMyDividendPayouts(0, 20);
@@ -23,8 +24,8 @@ export function DividendPayoutsCard() {
 
   return (
     <Card
-      title="Dividendos recibidos"
-      description="Pagos automaticos por la energia generada por los parques en los que invertiste. Los USDC llegan a tu wallet sin que tengas que firmar nada."
+      title="Pagos de dividendos registrados"
+      description="Este bloque muestra transferencias de dividendos ya acreditadas a tu wallet y registradas por el sistema."
       actions={
         items.length > 0 ? (
           <Badge tone="success">{items.length} pagos</Badge>
@@ -96,7 +97,7 @@ export function DividendPayoutsCard() {
                     title={p.txHash}
                   >
                     <ExternalLink className="h-3 w-3" />
-                    {p.txHash.slice(0, 10)}…
+                    {p.txHash.slice(0, 10)}...
                   </a>
                 )}
               </li>
@@ -104,8 +105,7 @@ export function DividendPayoutsCard() {
           </ul>
         ) : (
           <p className="rounded-lg border border-dashed border-border bg-secondary/30 p-4 text-center text-sm text-muted-foreground">
-            Todavia no recibiste pagos. Aparecen apenas el oracle dispara un
-            batch del parque en el que invertiste.
+            Todavia no hay pagos registrados para tu wallet.
           </p>
         )}
       </div>

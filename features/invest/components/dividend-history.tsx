@@ -8,15 +8,15 @@ import { explorerTxUrl } from "@/features/web3/lib/contracts";
 import { formatCurrency } from "@/shared/lib/utils";
 
 /**
- * Historial de dividendos reclamados on-chain por el usuario.
+ * Historial de claims ejecutados sobre el DividendDistributor.
  */
 export function DividendHistory() {
   const claims = useMyDividends(0, 10);
 
   return (
     <Card
-      title="Historial de dividendos"
-      description="Cada vez que reclamás dividendos on-chain queda registrado acá."
+      title="Historial de claims"
+      description="Cada reclamo ejecutado sobre el DividendDistributor queda registrado aqui."
     >
       {claims.isLoading ? (
         <div className="space-y-2">
@@ -52,14 +52,14 @@ export function DividendHistory() {
                 title={c.txHash}
               >
                 <ExternalLink className="h-3 w-3" />
-                {c.txHash.slice(0, 10)}…
+                {c.txHash.slice(0, 10)}...
               </a>
             </li>
           ))}
         </ul>
       ) : (
         <p className="rounded-lg border border-dashed border-border bg-secondary/30 p-4 text-center text-sm text-muted-foreground">
-          Todavía no reclamaste dividendos.
+          Todavia no ejecutaste claims.
         </p>
       )}
     </Card>
