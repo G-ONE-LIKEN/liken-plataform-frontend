@@ -28,6 +28,7 @@ import { useMyOrders } from "@/features/marketplace/hooks/useOrderBook"
 import { ClaimDividendsCard } from "@/features/invest/components/claim-dividends-card"
 import { InvestmentHistory } from "@/features/invest/components/investment-history"
 import { DividendHistory } from "@/features/invest/components/dividend-history"
+import { DividendPayoutsCard } from "@/features/invest/components/dividend-payouts-card"
 import { env } from "@/shared/config/env"
 import { useSession } from "@/providers/session-provider"
 import type { MovementType } from "@/features/wallet/types/wallet"
@@ -345,6 +346,9 @@ export default function WalletPage() {
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             <Gift className="h-4 w-4" /> Inversiones y dividendos
           </h2>
+          <div className="mb-6">
+            <DividendPayoutsCard />
+          </div>
           <div className="grid gap-6 lg:grid-cols-2">
             <ClaimDividendsCard />
             <InvestmentHistory />

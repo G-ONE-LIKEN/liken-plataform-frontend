@@ -76,3 +76,22 @@ export type PendingDividendsResponse = {
   walletAddress: string;
   pendingUsdc: string;
 };
+
+/**
+ * Pago directo de dividendos via {@code usdc.transfer} desde el signer admin.
+ * No requiere firma del holder — los USDC llegan automaticamente a su wallet
+ * cuando el contrato del oracle dispara un batch para el proyecto.
+ */
+export type DividendPayoutResponse = {
+  id: number;
+  batchId: string;
+  projectId: number;
+  userId: number | null;
+  walletAddress: string;
+  amount: string;
+  txHash: string | null;
+  blockNumber: number | null;
+  paidAt: string;
+};
+
+export type DividendPayoutsPage = PageResponse<DividendPayoutResponse>;

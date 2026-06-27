@@ -65,8 +65,8 @@ export function ClaimDividendsCard() {
 
   return (
     <Card
-      title="Dividendos on-chain"
-      description="Reclamá tus dividendos directamente desde el DividendDistributor."
+      title="Pool legacy (DividendDistributor)"
+      description="Los nuevos dividendos llegan automaticamente a tu wallet — no hace falta reclamar nada acá. Este pool guarda los USDC depositados en el contrato viejo, reclamables a demanda con tu firma."
       actions={
         wallet ? (
           <Badge tone={hasSomething ? "success" : "neutral"}>
